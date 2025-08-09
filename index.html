@@ -48,39 +48,6 @@
       letter-spacing:-.02em;
     }
     .sub{color:var(--muted); font-size: clamp(14px,2.5vw,18px); margin:0 0 22px;}
-    .row{display:flex; gap:18px; flex-wrap:wrap; align-items:center}
-    .timer{
-      display:flex; gap:12px; flex-wrap:wrap;
-    }
-    .tile{
-      background:linear-gradient(180deg,#fff, #f6f9ff);
-      border:1px solid #eef2ff; border-radius:16px;
-      padding:16px 18px; min-width:88px; text-align:center;
-      box-shadow:0 6px 18px rgba(59,130,246,.06);
-    }
-    .num{font-size:28px; font-weight:800}
-    .lbl{font-size:12px; color:var(--muted); letter-spacing:.3px; text-transform:uppercase}
-
-    .form{
-      display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;
-    }
-    input[type="email"]{
-      flex:1 1 260px; padding:14px 16px; border-radius:14px;
-      border:1px solid #e5e7eb; outline:none; font-size:16px;
-      background:#fff; box-shadow:0 2px 8px rgba(15,23,42,.04) inset;
-    }
-    input[type="email"]:focus{border-color:var(--primary); box-shadow:0 0 0 6px var(--ring)}
-    button{
-      padding:14px 18px; border:none; border-radius:14px; cursor:pointer;
-      background:linear-gradient(180deg, var(--primary), #1d4ed8);
-      color:#fff; font-weight:700; font-size:16px;
-      box-shadow:0 8px 16px rgba(59,130,246,.3);
-      transition:transform .04s ease;
-    }
-    button:active{transform:translateY(1px)}
-    .foot{
-      margin-top:18px; color:var(--muted); font-size:13px;
-    }
     .logo{
       display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px;
     }
@@ -96,13 +63,12 @@
     .pill{
       background:#f1f5f9; color:#0f172a; padding:6px 10px; border-radius:999px; font-size:12px;
     }
-    .divider{height:1px; background:linear-gradient(90deg,transparent,#e5e7eb,transparent); margin:14px 0 18px;}
-    .links{display:flex; gap:14px; flex-wrap:wrap}
-    .link{
-      padding:10px 12px; border-radius:12px; background:#f8fafc; border:1px solid #eef2ff;
-      color:#0f172a; text-decoration:none; font-size:14px;
+    .footer-text{
+      margin-top:20px;
+      font-size:14px;
+      color:var(--muted);
+      text-align:center;
     }
-    .success{display:none; margin-top:12px; color:var(--accent); font-weight:600}
   </style>
 </head>
 <body>
@@ -123,72 +89,12 @@
 
       <span class="badge">Coming Soon</span>
       <h1 id="title" class="title">A fresh experience is on the way.</h1>
-      <p class="sub">We’re adding the final touches. Leave your email and we’ll ping you the moment we open.</p>
+      <p class="sub">We’re adding the final touches. Stay tuned.</p>
 
-      <div class="row">
-        <section class="timer" aria-label="Countdown to launch">
-          <div class="tile"><div class="num" id="d">00</div><div class="lbl">Days</div></div>
-          <div class="tile"><div class="num" id="h">00</div><div class="lbl">Hours</div></div>
-          <div class="tile"><div class="num" id="m">00</div><div class="lbl">Minutes</div></div>
-          <div class="tile"><div class="num" id="s">00</div><div class="lbl">Seconds</div></div>
-        </section>
-      </div>
-
-      <div class="divider"></div>
-
-      <form class="form" onsubmit="notify(event)">
-        <input type="email" id="email" name="email" placeholder="Enter your email" autocomplete="email" required />
-        <button type="submit" aria-label="Get notified">Notify Me</button>
-      </form>
-      <div id="ok" class="success" role="status">Thanks! We’ll keep you posted.</div>
-
-      <div class="foot">
-        <div class="links" aria-label="Quick links">
-          <a class="link" href="#" onclick="return false;">Privacy</a>
-          <a class="link" href="#" onclick="return false;">Status</a>
-          <a class="link" href="#" onclick="return false;">Contact</a>
-        </div>
+      <div class="footer-text">
+        AI generated in Mangalpur Jind Haryana. by TriColor Initiatives Private Limited
       </div>
     </main>
   </div>
-
-  <script>
-    // === Countdown (set your target date/time here) ===
-    // Example: launch 21 days from now at 10:00
-    const target = new Date(Date.now() + 21*24*60*60*1000);
-    const dEl = document.getElementById('d');
-    const hEl = document.getElementById('h');
-    const mEl = document.getElementById('m');
-    const sEl = document.getElementById('s');
-
-    function tick(){
-      const now = new Date();
-      let diff = Math.max(0, target - now);
-      const d = Math.floor(diff / (1000*60*60*24)); diff -= d*24*60*60*1000;
-      const h = Math.floor(diff / (1000*60*60));    diff -= h*60*60*1000;
-      const m = Math.floor(diff / (1000*60));       diff -= m*60*1000;
-      const s = Math.floor(diff / 1000);
-      dEl.textContent = String(d).padStart(2,'0');
-      hEl.textContent = String(h).padStart(2,'0');
-      mEl.textContent = String(m).padStart(2,'0');
-      sEl.textContent = String(s).padStart(2,'0');
-    }
-    tick(); setInterval(tick, 1000);
-
-    // === Email capture (local only; replace with your endpoint later) ===
-    function notify(e){
-      e.preventDefault();
-      const email = document.getElementById('email').value.trim();
-      try{
-        const list = JSON.parse(localStorage.getItem('notify_list')||'[]');
-        if(!list.includes(email)) list.push(email);
-        localStorage.setItem('notify_list', JSON.stringify(list));
-        document.getElementById('ok').style.display='block';
-        e.target.reset();
-      }catch(err){
-        alert('Saved locally. You can wire this to your API later.');
-      }
-    }
-  </script>
 </body>
 </html>
