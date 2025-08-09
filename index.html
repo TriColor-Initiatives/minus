@@ -1,100 +1,673 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Minus V2.0 - Coming Soon</title>
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minus V2.0</title>
   <style>
     :root{
-      --bg1:#f8fbff; --bg2:#eef6ff;
-      --primary:#3b82f6; --accent:#22c55e; --ink:#0f172a;
-      --muted:#5b6b85; --card:#ffffff; --ring:rgba(59,130,246,.25);
+      --bg:#f8fafc; --panel:#fff; --text:#0f172a; --muted:#64748b;
+      --brand:#2563eb; --brand-2:#14b8a6; --ok:#16a34a; --warn:#f59e0b; --bad:#ef4444;
+      --ring:rgba(37,99,235,.2); --row:#f1f5f9; --redish:#ffe6e6; --chip:#e2e8f0;
+      --shadow:0 6px 18px rgba(2,8,23,.08);
     }
+    [data-theme="dark"]{
+      --bg:#0b1220; --panel:#0f172a; --text:#e2e8f0; --muted:#93a3b8;
+      --brand:#60a5fa; --brand-2:#2dd4bf; --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+      --ring:rgba(96,165,250,.25); --row:#0b1324; --redish:#3a0d0d; --chip:#1f2a44;
+      --shadow:0 6px 18px rgba(0,0,0,.4);
+    }
+    [hidden]{display:none !important;}
+
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{
-      margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial;
-      color:var(--ink);
-      background:
-        radial-gradient(1200px 800px at -10% -10%, #eaf4ff 0%, transparent 60%),
-        radial-gradient(900px 600px at 110% 110%, #eafff3 0%, transparent 60%),
-        linear-gradient(180deg,var(--bg1),var(--bg2));
-    }
-    .wrap{
-      min-height:100%;
-      display:grid;
-      place-items:center;
-      padding:24px;
-    }
-    .card{
-      width:min(920px, 100%);
-      background:var(--card);
-      border-radius:24px;
-      box-shadow:0 10px 30px rgba(15,23,42,.08);
-      padding:28px;
-      position:relative;
-      overflow:hidden;
-    }
-    .badge{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:6px 12px; border-radius:999px; font-weight:600;
-      background:rgba(59,130,246,.08); color:var(--primary); font-size:12px;
-      letter-spacing:.3px; text-transform:uppercase;
-    }
-    .title{
-      font-size: clamp(28px, 5vw, 48px);
-      line-height:1.05; margin:14px 0 8px; font-weight:800;
-      letter-spacing:-.02em;
-    }
-    .sub{color:var(--muted); font-size: clamp(14px,2.5vw,18px); margin:0 0 22px;}
-    .logo{
-      display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px;
-    }
-    .blob{
-      position:absolute; inset:auto -60px -60px auto; width:200px; height:200px;
-      background:radial-gradient(closest-side, rgba(34,197,94,.18), transparent);
-      filter:blur(6px); border-radius:50%;
-      pointer-events:none;
-    }
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:6px;
-    }
-    .pill{
-      background:#f1f5f9; color:#0f172a; padding:6px 10px; border-radius:999px; font-size:12px;
-    }
-    .footer-text{
-      margin-top:20px;
-      font-size:14px;
-      color:var(--muted);
-      text-align:center;
-    }
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);
+      background:linear-gradient(180deg,var(--bg),#ffffff 60%);}
+
+    .container{max-width:1000px;margin:0 auto;padding:16px}
+    .app{background:var(--panel);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;border:1px solid rgba(2,8,23,.06)}
+    header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(2,8,23,.06);background:linear-gradient(135deg,var(--panel),#fdfcff10)}
+    .title{display:flex;align-items:center;gap:10px}
+    .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 4px 10px var(--ring)}
+    h1{font-size:18px;margin:0}
+    .subtitle{font-size:12px;color:var(--muted)}
+    .controls{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{border:0;padding:10px 14px;border-radius:12px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer;box-shadow:0 6px 12px var(--ring)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .btn.secondary{background:var(--brand-2)}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(2,8,23,.15)}
+    .btn.warn{background:var(--warn)}
+    .btn.danger{background:var(--bad)}
+
+    .tabs{display:flex;gap:6px;background:var(--row);padding:8px;border-radius:12px}
+    .tab{padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600;color:var(--muted)}
+    .tab.active{background:var(--panel);color:var(--text);box-shadow:var(--shadow)}
+
+    .content{padding:16px}
+    .grid{display:grid;gap:14px}
+    .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    @media (max-width: 720px){.grid.two{grid-template-columns:1fr} header{gap:8px}}
+
+    .card{background:var(--panel);border:1px solid rgba(2,8,23,.06);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type="text"],input[type="number"],select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(2,8,23,.15);background:transparent;color:var(--text)}
+    input:focus,select:focus{outline:none;box-shadow:0 0 0 4px var(--ring)}
+
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:var(--chip);padding:8px 10px;border-radius:999px;font-size:12px}
+    .notice{font-size:12px;color:var(--muted)}
+
+    table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+    thead th{position:sticky;top:0;z-index:1;background:var(--row)}
+    th,td{padding:10px;border-bottom:1px solid rgba(2,8,23,.08);text-align:center;word-wrap:break-word}
+    tbody tr:nth-child(odd){background:rgba(2,8,23,.02)}
+    .neg{background:var(--redish)}
+    .totalCell{font-weight:800}
+    .leader{background:linear-gradient(90deg,rgba(20,184,166,.12),rgba(37,99,235,.10));border:1px dashed rgba(20,184,166,.6)}
+    .loser{background:linear-gradient(90deg,rgba(239,68,68,.12),rgba(245,158,11,.12));border:1px dashed rgba(239,68,68,.6)}
+
+    .footer{padding:12px 16px;border-top:1px solid rgba(2,8,23,.06);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .tiny{font-size:11px;color:var(--muted)}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+    .switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+    .switch input{display:none}
+    .slider{width:42px;height:24px;background:#cbd5e1;border-radius:999px;position:relative}
+    .slider::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:all .2s ease}
+    .switch input:checked + .slider{background:var(--brand)}
+    .switch input:checked + .slider::after{transform:translateX(18px)}
+
+    .equal-cols{display:grid;grid-auto-columns:1fr;grid-auto-flow:column;gap:10px}
+    .equal-cols > *{min-width:0}
+    .ring{outline:3px solid var(--ring);border-radius:12px}
+	
+	/* Stronger disabled look */
+	button:disabled {
+	  opacity: 0.35;
+	  filter: grayscale(60%);
+	  cursor: not-allowed;
+	}
+	.btn-primary:disabled {
+	  background: #9dbff0; /* dull blue */
+	  color: #f0f4ff;
+	}
+	.lock-badge {
+	  display:inline-block;
+	  margin-left:8px;
+	  padding:3px 8px;
+	  border-radius:999px;
+	  background:#e3f2fd;
+	  color:#0b62c1;
+	  font-size:12px;
+	  font-weight:600;
+	}
+
+
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <main class="card" role="main" aria-labelledby="title">
-      <div class="blob" aria-hidden="true"></div>
-
-      <div class="topbar">
-        <div class="logo" aria-label="Brand">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="10" stroke="#3b82f6" stroke-width="2"/>
-            <path d="M7 13.5 11 9l6 8" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>We’re polishing something nice</span>
+  <div class="container">
+    <div class="app" id="app" aria-live="polite">
+      <header>
+        <div class="title">
+          <div class="logo" aria-hidden="true"></div>
+          <div>
+            <h1>Minus V2.0</h1>
+            <div class="subtitle" id="subtitle">Made in Mangalpur</div>
+          </div>
         </div>
-        <span class="pill">Clean • Fast • Friendly</span>
+        <div class="controls">
+          <button class="btn ghost" id="exportBtn" title="Export all data">Export</button>
+          <label class="btn ghost" title="Import a previously exported file">
+            Import <input id="importInput" type="file" accept="application/json" style="display:none">
+          </label>
+          <button class="btn warn" id="resetBtn" title="Reset everything (with confirm)">Reset</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="tabs" role="tablist" aria-label="Sections">
+          <div class="tab active" role="tab" aria-selected="true" id="tab-rules" data-tab="rules">⚙️ Rules</div>
+          <div class="tab" role="tab" aria-selected="false" id="tab-score" data-tab="score">🧮 Score</div>
+        </div>
+
+        <!-- RULES (Players + Options) -->
+        <section id="panel-rules" class="grid two" role="tabpanel" aria-labelledby="tab-rules">
+          <div class="card">
+            <h2>Players</h2>
+            <div class="grid two">
+              <div>
+                <label>Number of players</label>
+                <select id="playerCount">
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4" selected="">4</option>
+                </select>
+              </div>
+              <div>
+                <label>Minimum claim per player</label>
+                <select id="minClaim">
+                  <option value="1" selected="">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                </select>
+              </div>
+            </div>
+            <div id="playerNames" class="grid two" style="margin-top:10px"></div>
+            <div class="notice">Names &amp; rules lock once the first round is committed.</div>
+          </div>
+
+          <div class="card">
+            <h2>Options</h2>
+            <div class="grid two">
+              <div>
+                <label>Language</label>
+                <select id="lang">
+                  <option value="en" selected="">English</option>
+                  <option value="hi-HR">हरियाणवी (Haryanvi)</option>
+                </select>
+              </div>
+              <div>
+                <label>Theme</label>
+                <select id="theme">
+                  <option value="light" selected="">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:10px">
+              <label class="switch">
+                <input type="checkbox" id="playOnTen" checked="">
+                <span class="slider"></span>
+                <span>Play the round even if total claims = 10</span>
+              </label>
+              <div class="notice">When unchecked: if total claims = 10, no play happens and everyone's claim is added (no minus allowed).</div>
+			  <div> <button id="lockRules" class="btn">Lock Rules</button></div>
+              <div class="notice">Reset the game to edit the rules.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SCORE (Round + Scoreboard) -->
+        <section id="panel-score" class="grid two" role="tabpanel" aria-labelledby="tab-score" hidden="">
+          <div class="card">
+            <h2>Round</h2>
+            <div id="roundArea"></div>
+            <div class="row" style="margin-top:10px">
+              <button class="btn" id="lockClaimsBtn">Lock claims</button>
+              <button class="btn secondary" id="commitBtn" disabled="">Commit</button>
+              <button class="btn ghost" id="endGameBtn" title="Mark game as completed">End Game</button>
+            </div>
+            <div class="notice" id="roundNote">Enter claims ≥ min, lock to enable minus toggles.</div>
+          </div>
+          <div class="card">
+            <h2>Scoreboard</h2>
+            <div id="scoreTableWrap" class="ring" style="max-height:46vh; overflow:auto"></div>
+            <div class="chips" id="statusChips" style="margin-top:10px"></div>
+          </div>
+        </section>
       </div>
 
-      <span class="badge">Coming Soon</span>
-      <h1 id="title" class="title">A fresh experience is on the way.</h1>
-      <p class="sub">We’re adding the final touches. Stay tuned.</p>
-
-      <div class="footer-text">
-        Being generated by AI in Mangalpur Jind Haryana. by TriColor Initiatives Private Limited
+      <div class="footer">
+        <div class="tiny">AI generated in Mangalpur Jind Haryana. by TriColor Initiatives Private Limited</div>
+        <div class="tiny" id="audit"></div>
       </div>
-    </main>
+    </div>
   </div>
-</body>
-</html>
+
+  <audio id="sndCommit" preload="auto">
+    <source src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mp3">
+  </audio>
+  <audio id="sndWin" preload="auto">
+    <source src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mp3">
+  </audio>
+
+  <script>
+  // ---------- State ----------
+  const EMPTY = {
+    version: '2.0',
+    players: [ {name:'P1'}, {name:'P2'}, {name:'P3'}, {name:'P4'} ],
+    playerCount: 4,
+    minClaim: 1,
+    playOnTen: true,
+    theme: 'light',
+    lang: 'en',
+    rounds: [], // {claims:[], minus:[], scores:[], ts, autoNoPlay}
+    lockedConfigAfterFirstRound: false,
+  };
+  let S = load();
+  let currentWorking = {claims:[], minus:[], locked:false, autoNoPlay:false};
+  normalizeState();
+
+  function save(){ localStorage.setItem('minus_v2_state', JSON.stringify(S)); updateAudit('Saved'); }
+  function load(){
+    try{ const j = localStorage.getItem('minus_v2_state'); if(j) return JSON.parse(j); }catch(e){}
+    return structuredClone(EMPTY);
+  }
+  function resetAll(){
+    if(!confirm('Reset everything? This clears rounds, names, and settings.')) return;
+    S = structuredClone(EMPTY); save(); renderAll();
+  }
+
+  function normalizeState(){
+    try{
+      if(Array.isArray(S.rounds)){
+        S.rounds.forEach(r=>{
+          if(Array.isArray(r.scores)){
+            r.scores = r.scores.map(v => Number(v||0));
+          }
+          if(Array.isArray(r.claims)){
+            r.claims = r.claims.map(v => Number(v||0));
+          }
+        });
+      }
+      if(Array.isArray(S._cachedTotals)){
+        S._cachedTotals = S._cachedTotals.map(v => Number(v||0));
+      }
+    }catch(e){ /* no-op */ }
+  }
+
+
+  // ---------- i18n ----------
+  const T = {
+    en:{rules:'Rules',score:'Score',enterClaims:'Enter claims ≥ min, lock to enable minus toggles.'},
+    'hi-HR':{rules:'नियम',score:'स्कोर',enterClaims:'न्यूनतम से बराबर/ज़्यादा बोली डालो, फिर लॉक कर मिनस चुनो।'}
+  };
+
+  // ---------- Helpers ----------
+  const el = s => document.querySelector(s);
+  function updateAudit(msg){ el('#audit').textContent = new Date().toLocaleString() + ' • ' + msg; }
+  function download(filename, data){ const blob=new Blob([data],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url;a.download=filename;a.click(); setTimeout(()=>URL.revokeObjectURL(url),5000); }
+  const sum = a => a.reduce((x,y)=>x+y,0);
+
+  // ---------- Render ----------
+  function renderAll(){
+    document.documentElement.setAttribute('data-theme', S.theme==='dark'?'dark':'light');
+    renderTabs();
+    renderRules();
+    renderRoundArea();
+    renderScore();
+    // Panels: show Rules first by default
+    el('#panel-rules').hidden = false;
+    el('#panel-score').hidden = true;
+    el('#tab-rules').classList.add('active');
+    el('#tab-score').classList.remove('active');
+    save();
+  }
+
+  function renderTabs(){
+    el('#tab-rules').textContent = '⚙️ ' + T[S.lang].rules;
+    el('#tab-score').textContent = '🧮 ' + T[S.lang].score;
+  }
+
+  function renderRules(){
+    el('#playerCount').value = String(S.playerCount);
+    el('#minClaim').value   = String(S.minClaim);
+    el('#lang').value       = S.lang;
+    el('#theme').value      = S.theme;
+    el('#playOnTen').checked= !!S.playOnTen;
+
+    const wrap = el('#playerNames');
+    wrap.innerHTML = '';
+    for(let i=0;i<S.playerCount;i++){
+      const d = document.createElement('div');
+      d.innerHTML = `
+        <label>Player ${i+1} name</label>
+        <input type="text" id="pname-${i}" maxlength="12" value="${S.players[i]?.name ?? ('P'+(i+1))}" ${S.lockedConfigAfterFirstRound?'disabled':''}>
+      `;
+      wrap.appendChild(d);
+    }
+
+    const disable = S.lockedConfigAfterFirstRound;
+    el('#playerCount').disabled = disable;
+    el('#minClaim').disabled    = disable;
+    el('#lang').disabled        = disable;
+    el('#theme').disabled       = disable;
+    el('#playOnTen').disabled   = disable;
+  }
+
+  function renderRoundArea(){
+    const c = document.createElement('div');
+
+    // claims
+    const claimsDiv = document.createElement('div');
+    claimsDiv.className = 'equal-cols';
+    S.players.slice(0,S.playerCount).forEach((p,idx)=>{
+      const v = currentWorking.claims[idx] ?? S.minClaim;
+      const disable = currentWorking.locked || (!S.playOnTen && currentWorking.autoNoPlay);
+      claimsDiv.innerHTML += `
+        <div>
+          <label>${p.name}</label>
+          <input type="number"
+		   min="${S.minClaim}"
+		   step="1"
+		   value="${v}"
+		   data-claim="${idx}"
+		   ${disable?'disabled':''}
+		   onfocus="this.select()"
+		   onmouseup="return false;"
+		   style="appearance: textfield; -moz-appearance: textfield; -webkit-appearance: none;">
+
+        </div>`;
+    });
+    c.appendChild(claimsDiv);
+
+    // minus toggles (only when locked AND not in auto no-play case)
+    if(currentWorking.locked && !( !S.playOnTen && currentWorking.autoNoPlay )){
+      const minusDiv = document.createElement('div');
+      minusDiv.className = 'equal-cols';
+      S.players.slice(0,S.playerCount).forEach((p,idx)=>{
+        const checked = currentWorking.minus[idx] ? 'checked' : '';
+        minusDiv.innerHTML += `
+          <div>
+            <label>${p.name} — Minus?</label>
+            <label class="switch"><input type="checkbox" data-minus="${idx}" ${checked}><span class="slider"></span></label>
+          </div>`;
+      });
+      c.appendChild(minusDiv);
+    }
+
+    el('#roundArea').innerHTML = ''; el('#roundArea').appendChild(c);
+
+    el('#lockClaimsBtn').disabled = currentWorking.locked;
+    el('#commitBtn').disabled     = !currentWorking.locked;
+
+    const note = [];
+    if(!S.playOnTen && currentWorking.autoNoPlay){ note.push('No-play: total claims = 10. Will add claims directly.'); }
+    el('#roundNote').textContent = note.join(' ') || T[S.lang].enterClaims;
+  }
+
+	function renderScore(){
+	  const wrap = el('#scoreTableWrap');
+	  const pc = S.playerCount;
+	  const totals = new Array(pc).fill(0);
+	  S.rounds.forEach(r=>{ for(let i=0;i<pc;i++) totals[i]+= Number(r.scores[i]||0); });
+
+	  const maxTot = totals.length? Math.max(...totals):0;
+	  const minTot = totals.length? Math.min(...totals):0;
+
+	  // Removed the "#" column header
+	  let html = '<table><thead><tr>';
+	  for(let i=0;i<pc;i++){ html += `<th>${S.players[i].name}</th>`; }
+	  html += '</tr></thead><tbody>';
+
+	  // Removed the first column with idx+1
+	  S.rounds.forEach((r)=>{
+		html += `<tr ${r.autoNoPlay? 'class="leader"':''}>`;
+		for(let i=0;i<pc;i++){
+		  const val = Number(r.scores[i] ?? 0);
+		  html += `<td class="${val<0?'neg':''}">${val}</td>`;
+		}
+		html += '</tr>';
+	  });
+
+	  // Removed the extra <td> for "Total" in the first column
+	  html += `<tr>`;
+	  for(let i=0;i<pc;i++){
+		const cls = totals[i]===maxTot? 'leader totalCell' : totals[i]===minTot? 'loser totalCell' : 'totalCell';
+		html += `<td class="${cls}">${totals[i]}</td>`;
+	  }
+	  html += '</tr></tbody></table>';
+
+	  wrap.innerHTML = html;
+
+	  const chips = el('#statusChips'); chips.innerHTML = '';
+	  if(S.rounds.length){
+		const minIdx = [], maxIdx=[];
+		totals.forEach((t,i)=>{ if(t===minTot) minIdx.push(i); if(t===maxTot) maxIdx.push(i); });
+		const chip = t=>{ const s=document.createElement('div'); s.className='chip'; s.textContent=t; return s; };
+		chips.appendChild(chip('Leader: ' + maxIdx.map(i=>S.players[i].name).join(', ')));
+		chips.appendChild(chip('Minimum score: ' + minIdx.map(i=>S.players[i].name).join(', ')));
+	  }
+
+	  S._cachedTotals = totals.map(n=>Number(n||0)); save();
+	}
+
+
+  // ---------- Round logic ----------
+  function clampClaimsToMin(){ currentWorking.claims = currentWorking.claims.map(v=>Math.max(S.minClaim, parseInt(v||S.minClaim,10))); }
+  function recalcAutoNoPlay(){
+    const total = sum(currentWorking.claims.slice(0,S.playerCount).map(x=>parseInt(x||0,10)));
+    currentWorking.autoNoPlay = (total === 10);
+  }
+
+  function commitRound(){
+    const pc = S.playerCount;
+    clampClaimsToMin(); recalcAutoNoPlay();
+    const scores = new Array(pc).fill(0);
+
+    if(!S.playOnTen && currentWorking.autoNoPlay){
+      for(let i=0;i<pc;i++) scores[i] = parseInt(currentWorking.claims[i]||0,10);
+    }else{
+      for(let i=0;i<pc;i++){
+        const c = parseInt(currentWorking.claims[i]||0,10);
+        scores[i] = currentWorking.minus[i] ? -c : c;
+      }
+    }
+
+    S.rounds.push({
+      claims:[...currentWorking.claims],
+      minus:[...currentWorking.minus],
+      scores,
+      ts: Date.now(),
+      autoNoPlay: (!S.playOnTen && currentWorking.autoNoPlay)
+    });
+    S.lockedConfigAfterFirstRound = true;
+    save();
+
+    currentWorking = {claims:[], minus:[], locked:false, autoNoPlay:false};
+    try{ el('#sndCommit').play(); }catch(e){}
+    renderAll();
+    // Switch to Score tab automatically after first commit for clarity
+    activateTab('score');
+  }
+
+  function endGame(){
+  const totals = (S._cachedTotals || new Array(S.playerCount).fill(0));
+  if (S.rounds.length){
+    const ordering = totals.map((t,i)=>({i,t})).sort((a,b)=> b.t-a.t).map(o=>o.i);
+    const rankEmoji = ['🏆😎','🙂','😬','💀'];
+    const msgs = ordering.map((idx,rank)=> `${rank+1}. ${S.players[idx].name} ${rankEmoji[rank]||''} — ${totals[idx]} pts`);
+    launchConfetti();
+    alert('Game Completed!\n\n' + msgs.join('\n'));
+    const min = Math.min(...totals); const minIdx = totals.findIndex(t=>t===min); flashLoser(minIdx);
+    try{ el('#sndWin').play(); }catch(e){}
+  }
+
+  // keep names, rules and UI prefs
+  const keep = {
+    players: S.players,
+    playerCount: S.playerCount,
+    minClaim: S.minClaim,
+    playOnTen: S.playOnTen,
+    theme: S.theme,
+    lang: S.lang
+  };
+
+  // fresh state using keepers
+  S = structuredClone(EMPTY);
+  Object.assign(S, keep);
+  S.rounds = [];
+  S._cachedTotals = [];
+  S.lockedConfigAfterFirstRound = false;
+
+  currentWorking = {
+    claims: new Array(S.playerCount).fill(S.minClaim),
+    minus: new Array(S.playerCount).fill(false),
+    locked:false,
+    autoNoPlay:false
+  };
+
+  save();
+  renderAll();
+  activateTab('score');
+}
+  
+  // Simple confetti launcher
+	function launchConfetti(){
+  if (typeof confetti !== "function") { console.warn("Confetti lib missing"); return; }
+	  var duration = 3 * 1000;
+	  var animationEnd = Date.now() + duration;
+	  var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
+
+	  function randomInRange(min, max) {
+		return Math.random() * (max - min) + min;
+	  }
+
+	  (function frame() {
+		confetti(Object.assign({}, defaults, {
+		  particleCount: 5,
+		  origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+		}));
+		confetti(Object.assign({}, defaults, {
+		  particleCount: 5,
+		  origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+		}));
+
+		if (Date.now() < animationEnd) {
+		  requestAnimationFrame(frame);
+		}
+	  }());
+	}
+
+  function flashLoser(i){
+    const table = el('#scoreTableWrap table'); if(!table) return;
+    const lastRow = table.querySelector('tbody tr:last-child');
+    const cell = lastRow?.children?.[i+1];
+    if(cell){
+      cell.classList.add('loser'); cell.style.transition='transform .25s ease'; cell.style.transform='scale(1.05)';
+      setTimeout(()=>{ cell.style.transform='scale(1)'; }, 300);
+    }
+  }
+
+  // ---------- Events ----------
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', ()=> activateTab(t.dataset.tab));
+  });
+
+  function activateTab(tab){
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    el('#tab-'+tab).classList.add('active');
+    el('#panel-rules').hidden = (tab!=='rules');
+    el('#panel-score').hidden = (tab!=='score');
+  }
+  
+
+  el('#playerCount').addEventListener('change', e=>{ if(S.lockedConfigAfterFirstRound) return; S.playerCount=parseInt(e.target.value,10); S.players.length=S.playerCount; while(S.players.length<4) S.players.push({name:'P'+(S.players.length+1)}); save(); renderRules(); renderRoundArea(); renderScore(); });
+  el('#minClaim').addEventListener('change', e=>{ if(S.lockedConfigAfterFirstRound) return; S.minClaim=parseInt(e.target.value,10); save(); renderRoundArea(); });
+  el('#lang').addEventListener('change', e=>{ S.lang=e.target.value; save(); renderTabs(); el('#roundNote').textContent=T[S.lang].enterClaims; });
+  el('#theme').addEventListener('change', e=>{ S.theme=e.target.value; save(); document.documentElement.setAttribute('data-theme', S.theme==='dark'?'dark':'light'); });
+  el('#playOnTen').addEventListener('change', e=>{ if(S.lockedConfigAfterFirstRound) return; S.playOnTen=!!e.target.checked; save(); renderRoundArea(); });
+
+  el('#playerNames').addEventListener('input', e=>{
+    if(S.lockedConfigAfterFirstRound) return;
+    if(e.target.id?.startsWith('pname-')){
+      const i = parseInt(e.target.id.split('-')[1],10);
+      S.players[i].name = e.target.value || ('P'+(i+1));
+      save(); renderScore(); renderRoundArea();
+    }
+  });
+
+  el('#roundArea').addEventListener('input', e=>{
+    if(e.target.dataset.claim!==undefined){
+      const i = parseInt(e.target.dataset.claim,10);
+      currentWorking.claims[i] = parseInt(e.target.value||S.minClaim,10);
+      recalcAutoNoPlay(); renderRoundArea();
+    }
+  });
+  el('#roundArea').addEventListener('change', e=>{
+    if(e.target.dataset.minus!==undefined){
+      const i = parseInt(e.target.dataset.minus,10);
+      currentWorking.minus[i] = !!e.target.checked; save();
+    }
+  });
+
+	el('#lockClaimsBtn').addEventListener('click', ()=>{
+	  clampClaimsToMin();
+
+	  // Check sum of all claims for this round
+	  const total = sum(
+		currentWorking.claims.slice(0, S.playerCount).map(v => parseInt(v || 0, 10))
+	  );
+
+	  if (total < 10) {
+		alert('10 तो पुरे करले ताऊ।');
+		return; // do not lock
+	  }
+
+	  recalcAutoNoPlay();
+	  currentWorking.locked = true;
+
+	  if (!S.playOnTen && currentWorking.autoNoPlay) {
+		// Auto-commit in no-play case
+		commitRound();
+	  } else {
+		renderRoundArea();
+	  }
+	});
+
+
+  el('#commitBtn').addEventListener('click', ()=>{ commitRound(); });
+  el('#endGameBtn').addEventListener('click', ()=>{ endGame(); });
+
+  el('#exportBtn').addEventListener('click', ()=> download('minus-v2-export-'+new Date().toISOString().replace(/[:.]/g,'-')+'.json', JSON.stringify(S, null, 2)));
+  el('#importInput').addEventListener('change', async (e)=>{
+    const file = e.target.files?.[0]; if(!file) return;
+    const text = await file.text();
+    try{
+      const obj = JSON.parse(text); if(!obj || !obj.version) throw new Error('Invalid file');
+      S = obj; save(); renderAll(); alert('Import successful.');
+    }catch(err){ alert('Import failed: '+err.message); }
+    e.target.value = '';
+  });
+  el('#resetBtn').addEventListener('click', resetAll);
+
+  // init
+  currentWorking.claims = new Array(S.playerCount).fill(S.minClaim);
+  currentWorking.minus  = new Array(S.playerCount).fill(false);
+  renderAll();
+  
+  // If rules are already locked, go to Score tab on load
+	if (S.locked || S.lockedConfigAfterFirstRound) {
+	  activateTab('score');
+	}
+
+	function switchTab(tab) {
+	  // Block Score until rules are locked
+	  if (tab === 'score' && !S.locked) {
+		alert('Please lock rules first');
+		tab = 'rules';
+	  }
+
+	  const targetTabEl   = document.querySelector(`.tab[data-tab="${tab}"]`);
+	  const targetPanelEl = document.getElementById(tab);
+
+	  // Clear current actives
+	  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+	  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+	  // Add actives if elements exist
+	  if (targetTabEl)   targetTabEl.classList.add('active');
+	  if (targetPanelEl) targetPanelEl.classList.add('active');
+
+	  // If back to Rules and already locked, keep controls view-only
+	  if (tab === 'rules' && S.locked) {
+		document.querySelectorAll('#rules input, #rules select').forEach(el => el.disabled = true);
+	  }
+}
+
+	
+	document.getElementById('lockRules').addEventListener('click', () => {
+	  // Lock rules
+	  S.locked = true;
+	  document.querySelectorAll('#panel-rules input, #panel-rules select')
+		.forEach(el => el.disabled = true);
+
+	  // Switch to Score tab
+	  activateTab('score');
+	});
+
+
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+
+</body></html>
