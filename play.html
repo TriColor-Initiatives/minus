@@ -5,54 +5,77 @@
 <title>Minus Play</title>
 <style>
 :root{
-  --bg:#0f172a; --panel:#ffffff; --text:#0f172a; --muted:#475569;
-  --brand:#e11d48; --brand-2:#3b82f6; --accent:#facc15; --ring:rgba(225,29,72,.4);
+  --bg:#f8fafc; --panel:#fff; --text:#0f172a; --muted:#64748b;
+  --brand:#2563eb; --brand-2:#14b8a6; --ring:rgba(37,99,235,.2);
+  --row:#f1f5f9; --redish:#ffe6e6; --shadow:0 6px 18px rgba(2,8,23,.08);
 }
-body{margin:0;font-family:'Comic Sans MS',Impact,sans-serif;color:var(--text);
-  background:linear-gradient(135deg,#1e3a8a,#be123c);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:20px;}
-#game{position:relative;display:flex;flex-direction:row;background:var(--panel);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:16px;width:100%;max-width:900px;}
-#main{flex:1;position:relative;}
-.btn{border:0;padding:10px 14px;border-radius:12px;background:linear-gradient(45deg,var(--brand),var(--brand-2));color:#fff;font-weight:700;cursor:pointer;box-shadow:0 6px 12px var(--ring);}
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);
+  background:linear-gradient(180deg,var(--bg),#ffffff 60%);}
+.container{max-width:1000px;margin:0 auto;padding:16px;}
+.app{background:var(--panel);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;border:1px solid rgba(2,8,23,.06)}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(2,8,23,.06);background:linear-gradient(135deg,var(--panel),#fdfcff10)}
+.title{display:flex;align-items:center;gap:10px}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 4px 10px var(--ring)}
+h1{font-size:18px;margin:0}
+.controls{display:flex;gap:10px}
+.btn{border:0;padding:10px 14px;border-radius:12px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer;box-shadow:0 6px 12px var(--ring)}
 .btn[disabled]{opacity:.6;cursor:not-allowed}
-#table{margin-top:20px;display:grid;grid-template-columns:100px 100px 100px;grid-template-rows:140px 140px 140px;gap:10px;justify-content:center;}
-.player{display:flex;flex-direction:column;align-items:center;}
-.slot{width:80px;height:110px;border:2px dashed var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.8);}
-.name{margin-top:4px;font-weight:600;}
-.info{font-size:12px;color:var(--muted);}
-.ai0{grid-column:2;grid-row:1;}
-.ai1{grid-column:1;grid-row:2;}
-.ai2{grid-column:3;grid-row:2;}
-.human{grid-column:2;grid-row:3;}
-.hand{display:flex;gap:6px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
-.card{width:60px;height:90px;border-radius:8px;border:2px solid var(--brand-2);background:linear-gradient(135deg,#fff,var(--brand-2) 120%);display:flex;flex-direction:column;justify-content:space-between;padding:4px;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.2);}
-.card.disabled{opacity:.3;cursor:not-allowed;}
-.card.red{color:#e11d48;}
-.corner{font-size:14px;}
-.suit{font-size:24px;text-align:center;}
-#controls{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
-#scoreboard{width:200px;margin-left:20px;}
-#scoreboard table{width:100%;border-collapse:collapse;}
-#scoreboard th,#scoreboard td{border:1px solid rgba(0,0,0,.1);padding:8px;text-align:center;}
-#scoreboard th{background:var(--brand-2);color:#fff;}
-#scoreboard tfoot td{font-weight:700;background:var(--accent);}
-#scoreboard .minus{color:var(--brand);font-weight:700;}
-#startBtn{position:absolute;top:10px;right:10px;}
-@media(max-width:600px){
-  #game{flex-direction:column;}
-  #scoreboard{width:100%;margin-left:0;margin-top:20px;}
-}
+.content{padding:16px}
+.layout{display:flex;gap:20px;align-items:flex-start}
+#main{flex:1}
+.card{background:var(--panel);border:1px solid rgba(2,8,23,.06);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+@media(max-width:720px){.layout{flex-direction:column;}#scoreArea{width:100%;}}
+
+table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+thead th{position:sticky;top:0;z-index:1;background:var(--row)}
+th,td{padding:10px;border-bottom:1px solid rgba(2,8,23,.08);text-align:center;word-wrap:break-word}
+tbody tr:nth-child(odd){background:rgba(2,8,23,.02)}
+.neg{background:var(--redish)}
+.totalCell{font-weight:800}
+.leader{background:linear-gradient(90deg,rgba(20,184,166,.12),rgba(37,99,235,.10));border:1px dashed rgba(20,184,166,.6)}
+.loser{background:linear-gradient(90deg,rgba(239,68,68,.12),rgba(245,158,11,.12));border:1px dashed rgba(239,68,68,.6)}
+
+#table{margin-top:20px;display:grid;grid-template-columns:100px 100px 100px;grid-template-rows:140px 140px 140px;gap:10px;justify-content:center}
+.player{display:flex;flex-direction:column;align-items:center}
+.slot{width:80px;height:110px;border:2px dashed var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.8)}
+.name{margin-top:4px;font-weight:600}
+.info{font-size:12px;color:var(--muted)}
+.ai0{grid-column:2;grid-row:1}
+.ai1{grid-column:1;grid-row:2}
+.ai2{grid-column:3;grid-row:2}
+.human{grid-column:2;grid-row:3}
+.hand{display:flex;gap:6px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.playCard{width:60px;height:90px;border-radius:8px;border:2px solid var(--brand-2);background:linear-gradient(135deg,#fff,var(--brand-2) 120%);display:flex;flex-direction:column;justify-content:space-between;padding:4px;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.playCard.disabled{opacity:.3;cursor:not-allowed}
+.playCard.red{color:var(--bad)}
+.corner{font-size:14px}
+.suit{font-size:24px;text-align:center}
+#controls{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+#scoreArea{width:200px}
 </style>
 </head>
 <body>
-<div id="game">
-  <div id="main">
-    <button id="startBtn" class="btn">Start Game</button>
-    <div id="phase"></div>
-    <div id="controls"></div>
-    <div id="table"></div>
-    <div id="hand" class="hand"></div>
+<div class="container">
+  <div class="app" id="app">
+    <header>
+      <div class="title"><div class="logo" aria-hidden="true"></div><h1>Minus Play</h1></div>
+      <div class="controls"><button id="startBtn" class="btn">Start Game</button></div>
+    </header>
+    <div class="content">
+      <div class="layout">
+        <div id="main">
+          <div id="phase"></div>
+          <div id="controls"></div>
+          <div id="table"></div>
+          <div id="hand" class="hand"></div>
+        </div>
+        <div id="scoreArea" class="card">
+          <h2>Score</h2>
+          <div id="scoreboard"></div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div id="scoreboard"></div>
 </div>
 <script>
 const Game = (()=>{
@@ -194,7 +217,7 @@ if(typeof document!=="undefined"){(function(){
     Game.sortHand(players[0].hand);
     const hand=players[0].hand;
     hand.forEach((c,i)=>{
-      const div=document.createElement('div');div.className='card'+(c.suit==='H'||c.suit==='D'?' red':'');
+      const div=document.createElement('div');div.className='playCard'+(c.suit==='H'||c.suit==='D'?' red':'');
       div.innerHTML='<div class="corner">'+symbolRank(c)+'</div><div class="suit">'+Game.suitSymbols[c.suit]+'</div><div class="corner">'+symbolRank(c)+'</div>';
       if(legal&&legal.indexOf(i)===-1)div.classList.add('disabled');
       else div.onclick=()=>playCard(0,i);
@@ -226,32 +249,31 @@ if(typeof document!=="undefined"){(function(){
   function updateScoreboard(){
     if(!players.length){scoreEl.innerHTML='';return;}
     scoreEl.innerHTML='';
-    const table=document.createElement('table');
-    const thead=document.createElement('thead');
-    const headerRow=document.createElement('tr');
-    headerRow.appendChild(document.createElement('th'));
-    players.forEach(p=>{const th=document.createElement('th');th.textContent=p.name;headerRow.appendChild(th);});
-    thead.appendChild(headerRow);table.appendChild(thead);
+    const pc=players.length;
+    const totals=players.map(p=>p.total);
+    const maxTot=Math.max(...totals);
+    const minTot=Math.min(...totals);
+    let html='<table><thead><tr>';
+    for(let i=0;i<pc;i++){html+=`<th>${players[i].name}</th>`;}
+    html+='</tr></thead><tbody>';
     const rounds=Math.max(0,...history.map(h=>h.length));
-    const tbody=document.createElement('tbody');
     for(let r=0;r<rounds;r++){
-      const tr=document.createElement('tr');
-      tr.appendChild(document.createElement('td'));
-      for(let i=0;i<players.length;i++){
-        const score=history[i][r];
-        const cell=document.createElement('td');
-        if(score!==undefined){cell.textContent=score;if(score<0)cell.classList.add('minus');}
-        tr.appendChild(cell);
+      html+='<tr>';
+      for(let i=0;i<pc;i++){
+        const val=history[i][r];
+        html+=`<td class="${val<0?'neg':''}">${val??''}</td>`;
       }
-      tbody.appendChild(tr);
+      html+='</tr>';
     }
-    table.appendChild(tbody);
-    const tfoot=document.createElement('tfoot');
-    const totalRow=document.createElement('tr');
-    const label=document.createElement('td');label.textContent='Total';totalRow.appendChild(label);
-    players.forEach(p=>{const cell=document.createElement('td');cell.textContent=p.total;cell.classList.add('total');if(p.total<0)cell.classList.add('minus');totalRow.appendChild(cell);});
-    tfoot.appendChild(totalRow);table.appendChild(tfoot);
-    scoreEl.appendChild(table);
+    html+='<tr>';
+    for(let i=0;i<pc;i++){
+      let cls='totalCell';
+      if(totals[i]===maxTot) cls='leader totalCell';
+      else if(totals[i]===minTot) cls='loser totalCell';
+      html+=`<td class="${cls}">${totals[i]}</td>`;
+    }
+    html+='</tr></tbody></table>';
+    scoreEl.innerHTML=html;
   }
 
   function startPlay(){
