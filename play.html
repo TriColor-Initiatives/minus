@@ -8,6 +8,7 @@
   --bg:#f8fafc; --panel:#fff; --text:#0f172a; --muted:#64748b;
   --brand:#2563eb; --brand-2:#14b8a6; --ring:rgba(37,99,235,.2);
   --row:#f1f5f9; --redish:#ffe6e6; --shadow:0 6px 18px rgba(2,8,23,.08);
+  --bad:#dc2626;
 }
 body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);
   background:linear-gradient(180deg,var(--bg),#ffffff 60%);}
@@ -47,7 +48,7 @@ tbody tr:nth-child(odd){background:rgba(2,8,23,.02)}
 .hand{display:flex;gap:6px;justify-content:center;margin-top:20px;flex-wrap:wrap}
 .playCard{width:60px;height:90px;border-radius:8px;border:2px solid var(--brand-2);background:linear-gradient(135deg,#fff,var(--brand-2) 120%);display:flex;flex-direction:column;justify-content:space-between;padding:4px;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.2)}
 .playCard.disabled{opacity:.3;cursor:not-allowed}
-.playCard.red{color:var(--bad)}
+.card.red,.playCard.red{color:var(--bad)}
 .corner{font-size:14px}
 .suit{font-size:24px;text-align:center}
 #controls{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap}
@@ -134,6 +135,7 @@ if(typeof document!=="undefined"){(function(){
   let deck=[]; let trump='S'; let trick=[]; let current=0; let trickNo=0; let lead=0;
   let totals=[0,0,0,0]; let history=[[],[],[],[]];
   let dealer=0; let highestBid=0; let trumpCaller=null; let bidIndex=0; let startBid=0; let slotEls=[]; let biddingDone=false;
+  let claimsLocked=false;
 
   function setup(){
     players=[
@@ -145,9 +147,9 @@ if(typeof document!=="undefined"){(function(){
     deck=Game.createDeck(); Game.shuffle(deck);
     dealer=totals.indexOf(Math.min(...totals));
     for(const p of players){p.hand=deck.splice(0,5);}
-    trump='S'; trick=[]; current=0; trickNo=0; highestBid=0; trumpCaller=null; biddingDone=false;
+    trump='S'; trick=[]; current=0; trickNo=0; highestBid=0; trumpCaller=null; biddingDone=false; claimsLocked=false;
     lead=Game.nextPlayer(dealer);
-    renderHand();
+    renderHand([]);
     renderTable();
     updatePlayerInfo();
     updateScoreboard();
@@ -220,7 +222,7 @@ if(typeof document!=="undefined"){(function(){
     controlsEl.innerHTML='';
     const inp=document.createElement('input');inp.type='number';inp.min=players[0].minClaim;inp.value=players[0].minClaim;controlsEl.appendChild(inp);
     const btn=document.createElement('button');btn.textContent='Lock Claims';btn.className='btn';btn.onclick=()=>{players[0].claim=parseInt(inp.value,10)||0;aiClaims();startPlay();};controlsEl.appendChild(btn);
-    renderHand();
+    renderHand([]);
   }
 
   function aiClaims(){
@@ -268,8 +270,9 @@ if(typeof document!=="undefined"){(function(){
   function startPlay(){
     controlsEl.innerHTML='';
     updateScoreboard();
-    renderHand();
+    renderHand([]);
     renderTable();
+    claimsLocked=true;
     updatePlayerInfo();
     lead=highestBid>=5?trumpCaller:Game.nextPlayer(dealer);
     current=lead;
@@ -282,7 +285,7 @@ if(typeof document!=="undefined"){(function(){
     for(let i=0;i<4;i++){
       const wrap=document.createElement('div');wrap.className='player '+classes[i];
       const slot=document.createElement('div');slot.className='slot';wrap.appendChild(slot);
-      const name=document.createElement('div');name.className='name';name.textContent=players[i].name;wrap.appendChild(name);
+      const name=document.createElement('div');name.className='name';name.id='name'+i;name.textContent=players[i].name;wrap.appendChild(name);
       const info=document.createElement('div');info.className='info';info.id='info'+i;wrap.appendChild(info);
       tableEl.appendChild(wrap);slotEls[i]=slot;
     }
@@ -290,9 +293,14 @@ if(typeof document!=="undefined"){(function(){
 
   function updatePlayerInfo(){
     players.forEach((p,i)=>{
-      const el=document.getElementById('info'+i);
-      if(!el) return;
-      el.textContent=p.claim?('Claim '+p.claim+(i===trumpCaller&&highestBid>=5?' '+Game.suitSymbols[trump]:'') ):'';
+      const info=document.getElementById('info'+i);
+      const name=document.getElementById('name'+i);
+      if(name){
+        name.textContent=(claimsLocked&&p.claim)?`${p.name} (${p.claim})`:p.name;
+      }
+      if(info){
+        info.textContent=(claimsLocked&&i===trumpCaller&&highestBid>=5)?Game.suitSymbols[trump]:'';
+      }
     });
     if(highestBid>=5){
       if(biddingDone){
@@ -328,6 +336,7 @@ if(typeof document!=="undefined"){(function(){
 
   function nextTurn(){
     if(players[current].ai){
+      renderHand([]);
       setTimeout(()=>{
         const legal=Game.getLegalMoves(players[current].hand,trick,trick[0]?.suit,trump);
         let idx=0;const hand=players[current].hand;
