@@ -116,16 +116,16 @@ if(typeof document!=="undefined"){(function(){
     for(const p of players){p.hand=deck.splice(0,5);}
     trump='S'; trick=[]; current=0; trickNo=0; highestBid=0; trumpCaller=null;
     lead=(dealer+1)%4;
-    phaseEl.textContent='Initial Bids';
     renderHand();
     renderTable();
+    updatePlayerInfo();
     bidIndex=(dealer+1)%4; startBid=bidIndex;
     askBid();
   }
 
   function askBid(){
     const p=players[bidIndex];
-    const minBid=highestBid?highestBid+1:5;
+    const minBid=highestBid>0?highestBid+1:5;
     if(p.ai){
       const decision=aiInitialBid(p,minBid);
       if(decision){highestBid=decision.bid;trump=decision.trump;trumpCaller=bidIndex;p.minClaim=highestBid;}
@@ -145,7 +145,7 @@ if(typeof document!=="undefined"){(function(){
     const counts={S:0,H:0,D:0,C:0};
     p.hand.forEach(c=>counts[c.suit]++);
     let bestSuit=Object.keys(counts).reduce((a,b)=>counts[a]>=counts[b]?a:b);
-    if(bestSuit!=='S'&&counts[bestSuit]>=3&&minBid<=5){return {bid:minBid,trump:bestSuit};}
+    if(bestSuit!=='S'&&counts[bestSuit]>=3){return {bid:minBid,trump:bestSuit};}
     return null;
   }
 
@@ -159,7 +159,7 @@ if(typeof document!=="undefined"){(function(){
     controlsEl.innerHTML='';
     for(const p of players){p.hand.push(...deck.splice(0,4));}
     for(const p of players){p.hand.push(...deck.splice(0,4));}
-    phaseEl.textContent='Enter Claim';
+    updatePlayerInfo();
     renderClaimPhase();
   }
 
@@ -278,7 +278,7 @@ if(typeof document!=="undefined"){(function(){
       },800);
     }else{
       Game.sortHand(players[0].hand);
-      const legal=Game.getLegalMoves(players[0].hand,trick,trick[0]?.suit,trump);
+      const legal=Game.getLegalMoves(players[0].hand,trick,trick[0]?.suit,trump,true);
       renderHand(legal);
     }
   }
