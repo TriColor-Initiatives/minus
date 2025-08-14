@@ -102,19 +102,19 @@ if(typeof document!=="undefined"){(function(){
 
   let players=[];
   let deck=[]; let trump='S'; let trick=[]; let current=0; let trickNo=0; let lead=0;
-  let totals=[0,0,0,0]; let dealer=0; let highestBid=0; let trumpCaller=null; let bidIndex=0; let startBid=0; let slotEls=[];
+  let totals=[0,0,0,0]; let dealer=0; let highestBid=0; let trumpCaller=null; let bidIndex=0; let startBid=0; let slotEls=[]; let biddingDone=false;
 
   function setup(){
     players=[
       {name:'You',hand:[],claim:0,tricks:0,ai:false,diff:'human',total:totals[0],minClaim:0},
-      {name:'AI 1',hand:[],claim:0,tricks:0,ai:true,diff:'easy',total:totals[1],minClaim:0},
-      {name:'AI 2',hand:[],claim:0,tricks:0,ai:true,diff:'medium',total:totals[2],minClaim:0},
-      {name:'AI 3',hand:[],claim:0,tricks:0,ai:true,diff:'hard',total:totals[3],minClaim:0},
+      {name:'AI 3',hand:[],claim:0,tricks:0,ai:true,diff:'hard',total:totals[1],minClaim:0},
+      {name:'AI 1',hand:[],claim:0,tricks:0,ai:true,diff:'easy',total:totals[2],minClaim:0},
+      {name:'AI 2',hand:[],claim:0,tricks:0,ai:true,diff:'medium',total:totals[3],minClaim:0},
     ];
     deck=Game.createDeck(); Game.shuffle(deck);
     dealer=totals.indexOf(Math.min(...totals));
     for(const p of players){p.hand=deck.splice(0,5);}
-    trump='S'; trick=[]; current=0; trickNo=0; highestBid=0; trumpCaller=null;
+    trump='S'; trick=[]; current=0; trickNo=0; highestBid=0; trumpCaller=null; biddingDone=false;
     lead=(dealer+1)%4;
     renderHand();
     renderTable();
@@ -124,19 +124,23 @@ if(typeof document!=="undefined"){(function(){
   }
 
   function askBid(){
+    updatePlayerInfo();
     const p=players[bidIndex];
     const minBid=highestBid>0?highestBid+1:5;
     if(p.ai){
       const decision=aiInitialBid(p,minBid);
       if(decision){highestBid=decision.bid;trump=decision.trump;trumpCaller=bidIndex;p.minClaim=highestBid;}
+      updatePlayerInfo();
       advanceBid();
     }else{
       controlsEl.innerHTML='';
-      const info=document.createElement('div');info.textContent='Bid at least '+minBid+' to choose trump or Pass';controlsEl.appendChild(info);
+      let text='Bid at least '+minBid+' to choose trump or Pass';
+      if(highestBid>=5){text+=' - '+players[trumpCaller].name+' claimed '+highestBid;}
+      const info=document.createElement('div');info.textContent=text;controlsEl.appendChild(info);
       const sel=document.createElement('select');
       for(const s of Game.suits){const opt=document.createElement('option');opt.value=s;opt.textContent=Game.suitSymbols[s];sel.appendChild(opt);}
       controlsEl.appendChild(sel);
-      const bidBtn=document.createElement('button');bidBtn.textContent='Bid '+minBid;bidBtn.className='btn';bidBtn.onclick=()=>{highestBid=minBid;trump=sel.value;trumpCaller=bidIndex;p.minClaim=highestBid;advanceBid();};controlsEl.appendChild(bidBtn);
+      const bidBtn=document.createElement('button');bidBtn.textContent='Bid '+minBid;bidBtn.className='btn';bidBtn.onclick=()=>{highestBid=minBid;trump=sel.value;trumpCaller=bidIndex;p.minClaim=highestBid;updatePlayerInfo();advanceBid();};controlsEl.appendChild(bidBtn);
       const passBtn=document.createElement('button');passBtn.textContent='Pass';passBtn.className='btn';passBtn.onclick=advanceBid;controlsEl.appendChild(passBtn);
     }
   }
@@ -159,6 +163,8 @@ if(typeof document!=="undefined"){(function(){
     controlsEl.innerHTML='';
     for(const p of players){p.hand.push(...deck.splice(0,4));}
     for(const p of players){p.hand.push(...deck.splice(0,4));}
+    biddingDone=true;
+    if(highestBid>=5){players[trumpCaller].claim=highestBid;}
     updatePlayerInfo();
     renderClaimPhase();
   }
@@ -188,6 +194,7 @@ if(typeof document!=="undefined"){(function(){
   function aiClaims(){
     for(let i=1;i<4;i++){
       const p=players[i];
+      if(p.claim) continue;
       let trumpCount=p.hand.filter(c=>c.suit===trump&&c.rank>=10).length;
       let high=p.hand.filter(c=>c.rank>=11).length;
       let val=Math.max(1,Math.min(13,Math.floor((trumpCount*1.5+high)/3)+1));
@@ -221,7 +228,7 @@ if(typeof document!=="undefined"){(function(){
 
   function renderTable(){
     tableEl.innerHTML='';slotEls=[];
-    const classes=['human','ai0','ai1','ai2'];
+    const classes=['human','ai1','ai0','ai2'];
     for(let i=0;i<4;i++){
       const wrap=document.createElement('div');wrap.className='player '+classes[i];
       const slot=document.createElement('div');slot.className='slot';wrap.appendChild(slot);
@@ -238,7 +245,11 @@ if(typeof document!=="undefined"){(function(){
       el.textContent=p.claim?('Claim '+p.claim+(i===trumpCaller&&highestBid>=5?' '+Game.suitSymbols[trump]:'') ):'';
     });
     if(highestBid>=5){
-      phaseEl.textContent='Trump '+Game.suitSymbols[trump]+' – Max Claim '+highestBid;
+      if(biddingDone){
+        phaseEl.textContent=players[trumpCaller].name+' claimed '+highestBid+' in '+Game.suitSymbols[trump];
+      }else{
+        phaseEl.textContent=players[trumpCaller].name+' claimed '+highestBid;
+      }
     }else{
       phaseEl.textContent='Default Trump '+Game.suitSymbols['S'];
     }
