@@ -16,19 +16,20 @@ const deck = Game.createDeck();
 assert.strictEqual(deck.length,52);
 assert.strictEqual(new Set(deck.map(c=>c.suit+c.rank)).size,52);
 
-// Rule: must play smallest higher card in lead suit
-let hand = [{suit:'H',rank:10},{suit:'H',rank:12},{suit:'S',rank:5}];
-let legal = Game.getLegalMoves(hand,[{suit:'H',rank:9,player:1}],'H','S');
-assert.deepStrictEqual(legal,[0]);
+// Rule: follow lead suit if possible (any card of the suit allowed)
+let hand = [{suit:'D',rank:3},{suit:'D',rank:5},{suit:'S',rank:9}];
+let legal = Game.getLegalMoves(hand,[{suit:'D',rank:2,player:1}],'D','S');
+assert.deepStrictEqual(legal.sort((a,b)=>a-b),[0,1]);
 
 // Rule: no lead suit, must play trump
 hand = [{suit:'S',rank:7},{suit:'S',rank:9},{suit:'C',rank:4}];
 legal = Game.getLegalMoves(hand,[{suit:'H',rank:11,player:1}],'H','S');
 assert.deepStrictEqual(legal.sort((a,b)=>a-b),[0,1]);
 
-// Rule: must beat highest trump if possible
-legal = Game.getLegalMoves(hand,[{suit:'H',rank:11,player:1},{suit:'S',rank:8,player:2}],'H','S');
-assert.deepStrictEqual(legal,[1]);
+// Rule: no lead suit and no trump, play any card
+hand = [{suit:'H',rank:7},{suit:'C',rank:4},{suit:'H',rank:8}];
+legal = Game.getLegalMoves(hand,[{suit:'D',rank:11,player:1}],'D','S');
+assert.deepStrictEqual(legal.sort((a,b)=>a-b),[0,1,2]);
 
 // Trick winner with trump
 const trick = [

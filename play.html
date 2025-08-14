@@ -51,19 +51,10 @@ const Game = (()=>{
     if(!lead) return hand.map((_,i)=>i);
     const leadCards = hand.filter(c=>c.suit===lead);
     if(leadCards.length){
-      const highestLead = trick.filter(c=>c.suit===lead).reduce((m,c)=>Math.max(m,c.rank),-1);
-      const higher = leadCards.filter(c=>c.rank>highestLead);
-      if(higher.length){const minHigher=Math.min(...higher.map(c=>c.rank));return hand.map((c,i)=>c.suit===lead&&c.rank===minHigher?i:-1).filter(i=>i>=0);} 
       return hand.map((c,i)=>c.suit===lead?i:-1).filter(i=>i>=0);
     }
     const trumps = hand.filter(c=>c.suit===trump);
     if(trumps.length){
-      const highestTrump = trick.filter(c=>c.suit===trump).reduce((m,c)=>Math.max(m,c.rank),-1);
-      if(highestTrump>=0){
-        const higher = trumps.filter(c=>c.rank>highestTrump);
-        if(higher.length){const minHigher=Math.min(...higher.map(c=>c.rank));return hand.map((c,i)=>c.suit===trump&&c.rank===minHigher?i:-1).filter(i=>i>=0);}
-        return hand.map((c,i)=>c.suit===trump?i:-1).filter(i=>i>=0);
-      }
       return hand.map((c,i)=>c.suit===trump?i:-1).filter(i=>i>=0);
     }
     return hand.map((_,i)=>i);
