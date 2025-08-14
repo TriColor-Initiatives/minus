@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Minus Rules</title>
+<style>
+:root{
+  --bg:#f8fafc; --panel:#fff; --text:#0f172a; --muted:#64748b;
+  --brand:#2563eb; --brand-2:#14b8a6; --ring:rgba(37,99,235,.2);
+  --row:#f1f5f9; --redish:#ffe6e6; --shadow:0 6px 18px rgba(2,8,23,.08);
+}
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);background:linear-gradient(180deg,var(--bg),#ffffff 60%);}
+.container{max-width:1000px;margin:0 auto;padding:16px;}
+.app{background:var(--panel);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;border:1px solid rgba(2,8,23,.06)}
+header{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(2,8,23,.06);background:linear-gradient(135deg,var(--panel),#fdfcff10)}
+.title{display:flex;align-items:center;gap:10px}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 4px 10px var(--ring)}
+h1{font-size:18px;margin:0}
+.content{padding:16px}
+.card{background:var(--panel);border:1px solid rgba(2,8,23,.06);border-radius:16px;padding:14px;box-shadow:var(--shadow);}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="app">
+    <header>
+      <div class="title"><div class="logo" aria-hidden="true"></div><h1>Minus Rules</h1></div>
+    </header>
+    <div class="content">
+      <div class="card">
+        <h2>Game Overview</h2>
+        <ul>
+          <li><strong>Players:</strong> 4 total (You + 3 AI opponents).</li>
+          <li><strong>Cards:</strong> Standard 52-card deck.</li>
+          <li><strong>Trump Suit:</strong> Default = Spades. Can change after first 5 cards.</li>
+          <li><strong>Claims:</strong> Declare number of tricks to win; miss it and score minus.</li>
+        </ul>
+        <h2>Game Flow</h2>
+        <ol>
+          <li>Deal 5 cards each. Player may change trump (must claim at least 5).</li>
+          <li>Deal remaining 8 cards (4 + 4) to each player.</li>
+          <li>Players declare claims; claims lock for round.</li>
+          <li>Play 13 tricks following strict rules.</li>
+          <li>Score: meet or exceed claim = tricks won; otherwise minus claim.</li>
+        </ol>
+        <h2>Strict Play Rules</h2>
+        <ol>
+          <li>Must follow suit if possible.</li>
+          <li>If you can beat highest card in lead suit, you must do so.</li>
+          <li>No lead suit? Must play trump; beat highest trump if possible.</li>
+          <li>No lead suit or trump? Play any card.</li>
+          <li>Highest lead card wins unless trump is played; then highest trump wins.</li>
+        </ol>
+        <h2>AI Difficulty</h2>
+        <ul>
+          <li><strong>Easy:</strong> plays lowest legal card.</li>
+          <li><strong>Medium:</strong> aims to win with smallest winning card.</li>
+          <li><strong>Hard:</strong> tracks cards and plays strategically.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

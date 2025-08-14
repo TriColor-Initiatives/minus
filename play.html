@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Minus Play</title>
+<style>
+:root{
+  --bg:#f8fafc; --panel:#fff; --text:#0f172a; --muted:#64748b;
+  --brand:#2563eb; --brand-2:#14b8a6; --ring:rgba(37,99,235,.2);
+  --row:#f1f5f9; --redish:#ffe6e6; --shadow:0 6px 18px rgba(2,8,23,.08);
+  --bad:#dc2626;
+}
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);
+  background:linear-gradient(180deg,var(--bg),#ffffff 60%);}
+.container{max-width:1000px;margin:0 auto;padding:16px;}
+.app{background:var(--panel);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;border:1px solid rgba(2,8,23,.06)}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(2,8,23,.06);background:linear-gradient(135deg,var(--panel),#fdfcff10)}
+.title{display:flex;align-items:center;gap:10px}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 4px 10px var(--ring)}
+h1{font-size:18px;margin:0}
+.controls{display:flex;gap:10px}
+.btn{border:0;padding:10px 14px;border-radius:12px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer;box-shadow:0 6px 12px var(--ring)}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+.content{padding:16px}
+.layout{display:flex;gap:20px;align-items:flex-start}
+#main{flex:1}
+.card{background:var(--panel);border:1px solid rgba(2,8,23,.06);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+@media(max-width:720px){.layout{flex-direction:column;}#scoreArea{width:100%;}}
+
+table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+thead th{position:sticky;top:0;z-index:1;background:var(--row)}
+th,td{padding:10px;border-bottom:1px solid rgba(2,8,23,.08);text-align:center;word-wrap:break-word}
+tbody tr:nth-child(odd){background:rgba(2,8,23,.02)}
+.neg{background:var(--redish)}
+.totalCell{font-weight:800}
+.leader{background:linear-gradient(90deg,rgba(20,184,166,.12),rgba(37,99,235,.10));border:1px dashed rgba(20,184,166,.6)}
+.loser{background:linear-gradient(90deg,rgba(239,68,68,.12),rgba(245,158,11,.12));border:1px dashed rgba(239,68,68,.6)}
+
+#table{margin-top:20px;display:grid;grid-template-columns:100px 100px 100px;grid-template-rows:140px 140px 140px;gap:10px;justify-content:center}
+.player{display:flex;flex-direction:column;align-items:center}
+.slot{width:80px;height:110px;border:2px dashed var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.8)}
+.name{margin-top:4px;font-weight:600}
+.info{font-size:12px;color:var(--muted)}
+.ai0{grid-column:2;grid-row:1}
+.ai1{grid-column:1;grid-row:2}
+.ai2{grid-column:3;grid-row:2}
+.human{grid-column:2;grid-row:3}
+.hand{display:flex;gap:6px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.playCard{width:60px;height:90px;border-radius:8px;border:2px solid var(--brand-2);background:linear-gradient(135deg,#fff,var(--brand-2) 120%);display:flex;flex-direction:column;justify-content:space-between;padding:4px;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.playCard.disabled{opacity:.3;cursor:not-allowed}
+.card.red,.playCard.red{color:var(--bad)}
+.corner{font-size:14px}
+.suit{font-size:24px;text-align:center}
+#controls{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+#scoreArea{width:200px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="app" id="app">
+    <header>
+      <div class="title"><div class="logo" aria-hidden="true"></div><h1>Minus Play</h1></div>
+      <div class="controls"><button id="startBtn" class="btn">Start Game</button></div>
+    </header>
+    <div class="content">
+      <div class="layout">
+        <div id="main">
+          <div id="phase"></div>
+          <div id="controls"></div>
+          <div id="table"></div>
+          <div id="hand" class="hand"></div>
+        </div>
+        <div id="scoreArea" class="card">
+          <h2>Score</h2>
+          <div id="scoreboard"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const Game = (()=>{
+  const suits=['S','H','C','D'];
+  const suitSymbols={S:'\u2660',H:'\u2665',D:'\u2666',C:'\u2663'};
+  const ranks=[2,3,4,5,6,7,8,9,10,11,12,13,14];
+  function createDeck(){const d=[];for(const s of suits){for(const r of ranks){d.push({suit:s,rank:r});}}return d;}
+  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+  function cardString(c){const rm={11:'J',12:'Q',13:'K',14:'A'};return (rm[c.rank]||c.rank)+c.suit;}
+  function getLegalMoves(hand,trick,lead,trump){
+    if(!lead) return hand.map((_,i)=>i);
+    const leadCards=hand.filter(c=>c.suit===lead);
+    if(leadCards.length){
+      return hand.map((c,i)=>c.suit===lead?i:-1).filter(i=>i>=0);
+    }
+    const trumps=hand.filter(c=>c.suit===trump);
+    if(trumps.length){
+      return hand.map((c,i)=>c.suit===trump?i:-1).filter(i=>i>=0);
+    }
+    return hand.map((_,i)=>i);
+  }
+  function determineTrickWinner(trick,lead,trump){
+    let winIdx=0;let win=trick[0];
+    for(let i=1;i<trick.length;i++){
+      const c=trick[i];
+      if(c.suit===win.suit&&c.rank>win.rank){win=c;winIdx=i;continue;}
+      if(c.suit===trump&&win.suit!==trump){win=c;winIdx=i;continue;}
+      if(c.suit===trump&&win.suit===trump&&c.rank>win.rank){win=c;winIdx=i;continue;}
+    }
+    return {index:winIdx,card:win};
+  }
+  function sortHand(hand){
+    const order={S:0,H:1,C:2,D:3};
+    hand.sort((a,b)=>{
+      if(order[a.suit]!==order[b.suit]) return order[a.suit]-order[b.suit];
+      return b.rank-a.rank;
+    });
+    return hand;
+  }
+  return {createDeck,shuffle,cardString,getLegalMoves,determineTrickWinner,sortHand,suits,suitSymbols};
+})();
+
+const turnOrder=[1,2,3,0];
+Game.turnOrder=turnOrder;
+Game.nextPlayer=idx=>turnOrder[(turnOrder.indexOf(idx)+1)%4];
+
+if(typeof document!=="undefined"){(function(){
+  const phaseEl=document.getElementById('phase');
+  const controlsEl=document.getElementById('controls');
+  const tableEl=document.getElementById('table');
+  const handEl=document.getElementById('hand');
+  const scoreEl=document.getElementById('scoreboard');
+  const startBtn=document.getElementById('startBtn');
+
+  let players=[];
+  let deck=[]; let trump='S'; let trick=[]; let current=0; let trickNo=0; let lead=0;
+  let totals=[0,0,0,0]; let history=[[],[],[],[]];
+  let dealer=0; let highestBid=0; let trumpCaller=null; let bidIndex=0; let startBid=0; let slotEls=[]; let biddingDone=false;
+  let claimsLocked=false;
+
+  function setup(){
+    players=[
+      {name:'You',hand:[],claim:0,tricks:0,ai:false,diff:'human',total:totals[0],minClaim:0},
+      {name:'AI 3',hand:[],claim:0,tricks:0,ai:true,diff:'hard',total:totals[1],minClaim:0},
+      {name:'AI 1',hand:[],claim:0,tricks:0,ai:true,diff:'easy',total:totals[2],minClaim:0},
+      {name:'AI 2',hand:[],claim:0,tricks:0,ai:true,diff:'medium',total:totals[3],minClaim:0},
+    ];
+    deck=Game.createDeck(); Game.shuffle(deck);
+    dealer=totals.indexOf(Math.min(...totals));
+    for(const p of players){p.hand=deck.splice(0,5);}
+    trump='S'; trick=[]; current=0; trickNo=0; highestBid=0; trumpCaller=null; biddingDone=false; claimsLocked=false;
+    lead=Game.nextPlayer(dealer);
+    renderHand([]);
+    renderTable();
+    updatePlayerInfo();
+    updateScoreboard();
+    bidIndex=Game.nextPlayer(dealer); startBid=bidIndex;
+    askBid();
+  }
+
+  function askBid(){
+    updatePlayerInfo();
+    const p=players[bidIndex];
+    const minBid=highestBid>0?highestBid+1:5;
+    if(p.ai){
+      const decision=aiInitialBid(p,minBid);
+      if(decision){highestBid=decision.bid;trump=decision.trump;trumpCaller=bidIndex;p.minClaim=highestBid;}
+      updatePlayerInfo();
+      advanceBid();
+    }else{
+      controlsEl.innerHTML='';
+      let text='Bid at least '+minBid+' to choose trump or Pass';
+      if(highestBid>=5){text+=' - '+players[trumpCaller].name+' claimed '+highestBid;}
+      const info=document.createElement('div');info.textContent=text;controlsEl.appendChild(info);
+      const sel=document.createElement('select');
+      for(const s of Game.suits){const opt=document.createElement('option');opt.value=s;opt.textContent=Game.suitSymbols[s];sel.appendChild(opt);}
+      controlsEl.appendChild(sel);
+      const bidBtn=document.createElement('button');bidBtn.textContent='Bid '+minBid;bidBtn.className='btn';bidBtn.onclick=()=>{highestBid=minBid;trump=sel.value;trumpCaller=bidIndex;p.minClaim=highestBid;updatePlayerInfo();advanceBid();};controlsEl.appendChild(bidBtn);
+      const passBtn=document.createElement('button');passBtn.textContent='Pass';passBtn.className='btn';passBtn.onclick=advanceBid;controlsEl.appendChild(passBtn);
+    }
+  }
+
+  function aiInitialBid(p,minBid){
+    const counts={S:0,H:0,D:0,C:0};
+    p.hand.forEach(c=>counts[c.suit]++);
+    let bestSuit=Object.keys(counts).reduce((a,b)=>counts[a]>=counts[b]?a:b);
+    if(bestSuit!=='S'&&counts[bestSuit]>=3){return {bid:minBid,trump:bestSuit};}
+    return null;
+  }
+
+  function advanceBid(){
+    bidIndex=Game.nextPlayer(bidIndex);
+    if(bidIndex===startBid){finalizeBidding();}
+    else{askBid();}
+  }
+
+  function finalizeBidding(){
+    controlsEl.innerHTML='';
+    for(const p of players){p.hand.push(...deck.splice(0,4));}
+    for(const p of players){p.hand.push(...deck.splice(0,4));}
+    biddingDone=true;
+    if(highestBid>=5){players[trumpCaller].claim=highestBid;}
+    updatePlayerInfo();
+    renderClaimPhase();
+  }
+
+  function renderHand(legal){
+    handEl.innerHTML='';
+    Game.sortHand(players[0].hand);
+    const hand=players[0].hand;
+    hand.forEach((c,i)=>{
+      const div=document.createElement('div');div.className='playCard'+(c.suit==='H'||c.suit==='D'?' red':'');
+      div.innerHTML='<div class="corner">'+symbolRank(c)+'</div><div class="suit">'+Game.suitSymbols[c.suit]+'</div><div class="corner">'+symbolRank(c)+'</div>';
+      if(legal&&legal.indexOf(i)===-1)div.classList.add('disabled');
+      else div.onclick=()=>playCard(0,i);
+      handEl.appendChild(div);
+    });
+  }
+
+  function symbolRank(c){const rm={11:'J',12:'Q',13:'K',14:'A'};return rm[c.rank]||c.rank;}
+
+  function renderClaimPhase(){
+    controlsEl.innerHTML='';
+    const inp=document.createElement('input');inp.type='number';inp.min=players[0].minClaim;inp.value=players[0].minClaim;controlsEl.appendChild(inp);
+    const btn=document.createElement('button');btn.textContent='Lock Claims';btn.className='btn';btn.onclick=()=>{players[0].claim=parseInt(inp.value,10)||0;aiClaims();startPlay();};controlsEl.appendChild(btn);
+    renderHand([]);
+  }
+
+  function aiClaims(){
+    for(let i=1;i<4;i++){
+      const p=players[i];
+      if(p.claim) continue;
+      let trumpCount=p.hand.filter(c=>c.suit===trump&&c.rank>=10).length;
+      let high=p.hand.filter(c=>c.rank>=11).length;
+      let val=Math.max(1,Math.min(13,Math.floor((trumpCount*1.5+high)/3)+1));
+      p.claim=Math.max(p.minClaim||0,val);
+    }
+    updateScoreboard();
+  }
+
+  function updateScoreboard(){
+    if(!players.length){scoreEl.innerHTML='';return;}
+    scoreEl.innerHTML='';
+    const pc=players.length;
+    const totals=players.map(p=>p.total);
+    const maxTot=Math.max(...totals);
+    const minTot=Math.min(...totals);
+    let html='<table><thead><tr>';
+    for(let i=0;i<pc;i++){html+=`<th>${players[i].name}</th>`;}
+    html+='</tr></thead><tbody>';
+    const rounds=Math.max(0,...history.map(h=>h.length));
+    for(let r=0;r<rounds;r++){
+      html+='<tr>';
+      for(let i=0;i<pc;i++){
+        const val=history[i][r];
+        html+=`<td class="${val<0?'neg':''}">${val??''}</td>`;
+      }
+      html+='</tr>';
+    }
+    html+='<tr>';
+    for(let i=0;i<pc;i++){
+      let cls='totalCell';
+      if(totals[i]===maxTot) cls='leader totalCell';
+      else if(totals[i]===minTot) cls='loser totalCell';
+      html+=`<td class="${cls}">${totals[i]}</td>`;
+    }
+    html+='</tr></tbody></table>';
+    scoreEl.innerHTML=html;
+  }
+
+  function startPlay(){
+    controlsEl.innerHTML='';
+    updateScoreboard();
+    renderHand([]);
+    renderTable();
+    claimsLocked=true;
+    updatePlayerInfo();
+    lead=highestBid>=5?trumpCaller:Game.nextPlayer(dealer);
+    current=lead;
+    nextTurn();
+  }
+
+  function renderTable(){
+    tableEl.innerHTML='';slotEls=[];
+    const classes=['human','ai1','ai0','ai2'];
+    for(let i=0;i<4;i++){
+      const wrap=document.createElement('div');wrap.className='player '+classes[i];
+      const slot=document.createElement('div');slot.className='slot';wrap.appendChild(slot);
+      const name=document.createElement('div');name.className='name';name.id='name'+i;name.textContent=players[i].name;wrap.appendChild(name);
+      const info=document.createElement('div');info.className='info';info.id='info'+i;wrap.appendChild(info);
+      tableEl.appendChild(wrap);slotEls[i]=slot;
+    }
+  }
+
+  function updatePlayerInfo(){
+    players.forEach((p,i)=>{
+      const info=document.getElementById('info'+i);
+      const name=document.getElementById('name'+i);
+      if(name){
+        name.textContent=(claimsLocked&&p.claim)?`${p.name} (${p.claim})`:p.name;
+      }
+      if(info){
+        info.textContent=(claimsLocked&&i===trumpCaller&&highestBid>=5)?Game.suitSymbols[trump]:'';
+      }
+    });
+    if(highestBid>=5){
+      if(biddingDone){
+        phaseEl.textContent=players[trumpCaller].name+' claimed '+highestBid+' in '+Game.suitSymbols[trump];
+      }else{
+        phaseEl.textContent=players[trumpCaller].name+' claimed '+highestBid;
+      }
+    }else{
+      phaseEl.textContent='Default Trump '+Game.suitSymbols['S'];
+    }
+  }
+
+  function playCard(playerIndex,cardIndex){
+    const p=players[playerIndex];
+    const card=p.hand.splice(cardIndex,1)[0];
+    trick.push({...card,player:playerIndex});
+    const slot=slotEls[playerIndex];
+    slot.innerHTML='<div class="card'+(card.suit==='H'||card.suit==='D'?' red':'')+'"><div class="corner">'+symbolRank(card)+'</div><div class="suit">'+Game.suitSymbols[card.suit]+'</div><div class="corner">'+symbolRank(card)+'</div></div>';
+    if(trick.length===4){
+      const win=Game.determineTrickWinner(trick,trick[0].suit,trump);
+      players[trick[win.index].player].tricks++;
+      lead=trick[win.index].player;
+      trick=[];
+      trickNo++;
+      if(trickNo===13){endRound();return;}
+      setTimeout(()=>{renderTable();updatePlayerInfo();current=lead;nextTurn();},1000);
+    }else{
+      current=Game.nextPlayer(playerIndex);
+      nextTurn();
+    }
+    if(playerIndex===0)renderHand();
+  }
+
+  function nextTurn(){
+    if(players[current].ai){
+      renderHand([]);
+      setTimeout(()=>{
+        const legal=Game.getLegalMoves(players[current].hand,trick,trick[0]?.suit,trump);
+        let idx=0;const hand=players[current].hand;
+        if(players[current].diff==='easy'){idx=legal.sort((a,b)=>hand[a].rank-hand[b].rank)[0];}
+        else if(players[current].diff==='medium'){idx=chooseWinningCard(legal,hand);}
+        else{idx=chooseSmartCard(legal,hand);}
+        playCard(current,idx);
+      },800);
+    }else{
+      Game.sortHand(players[0].hand);
+      const legal=Game.getLegalMoves(players[0].hand,trick,trick[0]?.suit,trump);
+      renderHand(legal);
+    }
+  }
+
+  function chooseWinningCard(legal,hand){
+    let best=null;
+    for(const i of legal){const c=hand[i];
+      let temp=[...trick,{...c,player:current}];
+      const win=Game.determineTrickWinner(temp,temp[0].suit,trump);
+      if(win.index===temp.length-1){if(!best||c.rank<best.rank)best=c;}
+    }
+    if(best){return hand.indexOf(best);}else{return legal.sort((a,b)=>hand[a].rank-hand[b].rank)[0];}
+  }
+
+  function chooseSmartCard(legal,hand){
+    const winIdx=chooseWinningCard(legal,hand);
+    if(winIdx!==undefined) return winIdx;
+    return legal.sort((a,b)=>hand[b].rank-hand[a].rank)[0];
+  }
+
+  function endRound(){
+    phaseEl.textContent='Round Complete';
+    controlsEl.innerHTML='';
+    for(let i=0;i<4;i++){
+      const p=players[i];
+      const roundScore=(p.tricks>=p.claim)?p.tricks:-p.claim;
+      p.total+=roundScore;
+      totals[i]=p.total;
+      history[i].push(roundScore);
+      p.tricks=0; p.claim=0;
+    }
+    updateScoreboard();
+    const btn=document.createElement('button');btn.textContent='Next Round';btn.className='btn';btn.onclick=setup;controlsEl.appendChild(btn);
+  }
+
+  startBtn.onclick=()=>{
+    totals=[0,0,0,0];
+    history=[[],[],[],[]];
+    startBtn.textContent='Restart Game';
+    setup();
+  };
+})();}
+</script>
+</body>
+</html>
+
