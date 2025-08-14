@@ -10,7 +10,8 @@
 }
 body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);
   background:linear-gradient(180deg,var(--bg),#ffffff 60%);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:20px;}
-#game{background:var(--panel);border-radius:18px;box-shadow:0 6px 18px rgba(2,8,23,.08);padding:16px;width:100%;max-width:900px;}
+#game{position:relative;display:flex;flex-direction:row;background:var(--panel);border-radius:18px;box-shadow:0 6px 18px rgba(2,8,23,.08);padding:16px;width:100%;max-width:900px;}
+#main{flex:1;}
 .btn{border:0;padding:10px 14px;border-radius:12px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer;box-shadow:0 6px 12px var(--ring);}
 .btn[disabled]{opacity:.6;cursor:not-allowed}
 #table{margin-top:20px;display:grid;grid-template-columns:100px 100px 100px;grid-template-rows:140px 140px 140px;gap:10px;justify-content:center;}
@@ -29,17 +30,25 @@ body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,
 .corner{font-size:14px;}
 .suit{font-size:24px;text-align:center;}
 #controls{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
-#scoreboard{margin-top:20px;}
+#scoreboard{width:200px;margin-left:20px;}
 #scoreboard table{width:100%;border-collapse:collapse;}
 #scoreboard th,#scoreboard td{border:1px solid rgba(2,8,23,.1);padding:8px;text-align:center;}
+#startBtn{position:absolute;top:10px;right:10px;}
+@media(max-width:600px){
+  #game{flex-direction:column;}
+  #scoreboard{width:100%;margin-left:0;margin-top:20px;}
+}
 </style>
 </head>
 <body>
 <div id="game">
-  <div id="phase"></div>
-  <div id="controls"></div>
-  <div id="table"></div>
-  <div id="hand" class="hand"></div>
+  <button id="startBtn" class="btn">Start Game</button>
+  <div id="main">
+    <div id="phase"></div>
+    <div id="controls"></div>
+    <div id="table"></div>
+    <div id="hand" class="hand"></div>
+  </div>
   <div id="scoreboard"></div>
 </div>
 <script>
@@ -103,10 +112,12 @@ if(typeof document!=="undefined"){(function(){
   const tableEl=document.getElementById('table');
   const handEl=document.getElementById('hand');
   const scoreEl=document.getElementById('scoreboard');
+  const startBtn=document.getElementById('startBtn');
 
   let players=[];
   let deck=[]; let trump='S'; let trick=[]; let current=0; let trickNo=0; let lead=0;
-  let totals=[0,0,0,0]; let dealer=0; let highestBid=0; let trumpCaller=null; let bidIndex=0; let startBid=0; let slotEls=[]; let biddingDone=false;
+  let totals=[0,0,0,0]; let history=[[],[],[],[]];
+  let dealer=0; let highestBid=0; let trumpCaller=null; let bidIndex=0; let startBid=0; let slotEls=[]; let biddingDone=false;
 
   function setup(){
     players=[
@@ -123,6 +134,7 @@ if(typeof document!=="undefined"){(function(){
     renderHand();
     renderTable();
     updatePlayerInfo();
+    updateScoreboard();
     bidIndex=Game.nextPlayer(dealer); startBid=bidIndex;
     askBid();
   }
@@ -208,16 +220,25 @@ if(typeof document!=="undefined"){(function(){
   }
 
   function updateScoreboard(){
+    if(!players.length){scoreEl.innerHTML='';return;}
     scoreEl.innerHTML='';
     const table=document.createElement('table');
-    const head=document.createElement('tr');['Player','Claim','Tricks','Score'].forEach(t=>{const th=document.createElement('th');th.textContent=t;head.appendChild(th);});
+    const rounds=Math.max(0,...history.map(h=>h.length));
+    const head=document.createElement('tr');
+    const thPlayer=document.createElement('th');thPlayer.textContent='Player';head.appendChild(thPlayer);
+    for(let i=0;i<rounds;i++){head.appendChild(document.createElement('th'));}
+    const thTotal=document.createElement('th');thTotal.textContent='Total';head.appendChild(thTotal);
     table.appendChild(head);
-    players.forEach(p=>{
+    players.forEach((p,idx)=>{
       const tr=document.createElement('tr');
-      tr.innerHTML='<td>'+p.name+'</td><td>'+p.claim+'</td><td>'+p.tricks+'</td><td>'+p.total+'</td>';
+      tr.appendChild(td(p.name));
+      history[idx].forEach(s=>tr.appendChild(td(s)));
+      for(let i=history[idx].length;i<rounds;i++) tr.appendChild(td(''));
+      tr.appendChild(td(p.total));
       table.appendChild(tr);
     });
     scoreEl.appendChild(table);
+    function td(v){const c=document.createElement('td');c.textContent=v;return c;}
   }
 
   function startPlay(){
@@ -269,7 +290,6 @@ if(typeof document!=="undefined"){(function(){
     if(trick.length===4){
       const win=Game.determineTrickWinner(trick,trick[0].suit,trump);
       players[trick[win.index].player].tricks++;
-      updateScoreboard();
       lead=trick[win.index].player;
       trick=[];
       trickNo++;
@@ -316,19 +336,26 @@ if(typeof document!=="undefined"){(function(){
   }
 
   function endRound(){
-    phaseEl.textContent='Game Over';
+    phaseEl.textContent='Round Complete';
     controlsEl.innerHTML='';
     for(let i=0;i<4;i++){
       const p=players[i];
       const roundScore=(p.tricks>=p.claim)?p.tricks:-p.claim;
       p.total+=roundScore;
       totals[i]=p.total;
+      history[i].push(roundScore);
+      p.tricks=0; p.claim=0;
     }
     updateScoreboard();
-    const btn=document.createElement('button');btn.textContent='New Game';btn.className='btn';btn.onclick=setup;controlsEl.appendChild(btn);
+    const btn=document.createElement('button');btn.textContent='Next Round';btn.className='btn';btn.onclick=setup;controlsEl.appendChild(btn);
   }
 
-  setup();
+  startBtn.onclick=()=>{
+    totals=[0,0,0,0];
+    history=[[],[],[],[]];
+    startBtn.textContent='Restart Game';
+    setup();
+  };
 })();}
 </script>
 </body>
