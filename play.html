@@ -5,18 +5,18 @@
 <title>Minus Play</title>
 <style>
 :root{
-  --bg:#f8fafc; --panel:#fff; --text:#0f172a; --muted:#64748b;
-  --brand:#2563eb; --brand-2:#14b8a6; --ring:rgba(37,99,235,.2);
+  --bg:#0f172a; --panel:#ffffff; --text:#0f172a; --muted:#475569;
+  --brand:#e11d48; --brand-2:#3b82f6; --accent:#facc15; --ring:rgba(225,29,72,.4);
 }
-body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);
-  background:linear-gradient(180deg,var(--bg),#ffffff 60%);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:20px;}
-#game{position:relative;display:flex;flex-direction:row;background:var(--panel);border-radius:18px;box-shadow:0 6px 18px rgba(2,8,23,.08);padding:16px;width:100%;max-width:900px;}
+body{margin:0;font-family:'Comic Sans MS',Impact,sans-serif;color:var(--text);
+  background:linear-gradient(135deg,#1e3a8a,#be123c);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:20px;}
+#game{position:relative;display:flex;flex-direction:row;background:var(--panel);border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.4);padding:16px;width:100%;max-width:900px;}
 #main{flex:1;position:relative;}
-.btn{border:0;padding:10px 14px;border-radius:12px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer;box-shadow:0 6px 12px var(--ring);}
+.btn{border:0;padding:10px 14px;border-radius:12px;background:linear-gradient(45deg,var(--brand),var(--brand-2));color:#fff;font-weight:700;cursor:pointer;box-shadow:0 6px 12px var(--ring);}
 .btn[disabled]{opacity:.6;cursor:not-allowed}
 #table{margin-top:20px;display:grid;grid-template-columns:100px 100px 100px;grid-template-rows:140px 140px 140px;gap:10px;justify-content:center;}
 .player{display:flex;flex-direction:column;align-items:center;}
-.slot{width:80px;height:110px;border:1px dashed rgba(2,8,23,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.slot{width:80px;height:110px;border:2px dashed var(--brand);border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.8);}
 .name{margin-top:4px;font-weight:600;}
 .info{font-size:12px;color:var(--muted);}
 .ai0{grid-column:2;grid-row:1;}
@@ -24,7 +24,7 @@ body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,
 .ai2{grid-column:3;grid-row:2;}
 .human{grid-column:2;grid-row:3;}
 .hand{display:flex;gap:6px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
-.card{width:60px;height:90px;border-radius:8px;border:1px solid rgba(2,8,23,.2);background:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:4px;cursor:pointer;}
+.card{width:60px;height:90px;border-radius:8px;border:2px solid var(--brand-2);background:linear-gradient(135deg,#fff,var(--brand-2) 120%);display:flex;flex-direction:column;justify-content:space-between;padding:4px;cursor:pointer;box-shadow:0 2px 4px rgba(0,0,0,.2);}
 .card.disabled{opacity:.3;cursor:not-allowed;}
 .card.red{color:#e11d48;}
 .corner{font-size:14px;}
@@ -32,9 +32,10 @@ body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,
 #controls{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
 #scoreboard{width:200px;margin-left:20px;}
 #scoreboard table{width:100%;border-collapse:collapse;}
-#scoreboard th,#scoreboard td{border:1px solid rgba(2,8,23,.1);padding:8px;text-align:center;}
-#scoreboard tfoot td{font-weight:700;background:rgba(2,8,23,.05);}
-#scoreboard .minus{color:#e11d48;}
+#scoreboard th,#scoreboard td{border:1px solid rgba(0,0,0,.1);padding:8px;text-align:center;}
+#scoreboard th{background:var(--brand-2);color:#fff;}
+#scoreboard tfoot td{font-weight:700;background:var(--accent);}
+#scoreboard .minus{color:var(--brand);font-weight:700;}
 #startBtn{position:absolute;top:10px;right:10px;}
 @media(max-width:600px){
   #game{flex-direction:column;}
