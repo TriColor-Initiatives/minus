@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Minus Play</title>
+<style>
+:root{
+  --bg:#f8fafc; --panel:#fff; --text:#0f172a; --muted:#64748b;
+  --brand:#2563eb; --brand-2:#14b8a6; --ring:rgba(37,99,235,.2);
+}
+body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--text);
+  background:linear-gradient(180deg,var(--bg),#ffffff 60%);min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:20px;}
+#game{background:var(--panel);border-radius:18px;box-shadow:0 6px 18px rgba(2,8,23,.08);padding:16px;width:100%;max-width:900px;}
+.btn{border:0;padding:10px 14px;border-radius:12px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer;box-shadow:0 6px 12px var(--ring);}
+.btn[disabled]{opacity:.6;cursor:not-allowed}
+#table{margin-top:20px;display:grid;grid-template-columns:80px 80px 80px;grid-template-rows:110px 110px 110px;gap:10px;justify-content:center;}
+.slot{width:80px;height:110px;border:1px dashed rgba(2,8,23,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.ai0{grid-column:2;grid-row:1;}
+.ai1{grid-column:1;grid-row:2;}
+.ai2{grid-column:3;grid-row:2;}
+.human{grid-column:2;grid-row:3;}
+.hand{display:flex;gap:6px;justify-content:center;margin-top:20px;flex-wrap:wrap;}
+.card{width:60px;height:90px;border-radius:8px;border:1px solid rgba(2,8,23,.2);background:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:4px;cursor:pointer;}
+.card.disabled{opacity:.3;cursor:not-allowed;}
+.card.red{color:#e11d48;}
+.corner{font-size:14px;}
+.suit{font-size:24px;text-align:center;}
+#controls{display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
+#scoreboard{margin-top:20px;}
+#scoreboard table{width:100%;border-collapse:collapse;}
+#scoreboard th,#scoreboard td{border:1px solid rgba(2,8,23,.1);padding:8px;text-align:center;}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="phase"></div>
+  <div id="controls"></div>
+  <div id="table"></div>
+  <div id="hand" class="hand"></div>
+  <div id="scoreboard"></div>
+</div>
+<script>
+const Game = (()=>{
+  const suits = ['S','H','D','C'];
+  const suitSymbols = {S:'\u2660',H:'\u2665',D:'\u2666',C:'\u2663'};
+  const ranks = [2,3,4,5,6,7,8,9,10,11,12,13,14];
+  function createDeck(){const d=[];for(const s of suits){for(const r of ranks){d.push({suit:s,rank:r});}}return d;}
+  function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
+  function cardString(c){const rm={11:'J',12:'Q',13:'K',14:'A'};return (rm[c.rank]||c.rank)+c.suit;}
+  function getLegalMoves(hand,trick,lead,trump){
+    if(!lead) return hand.map((_,i)=>i);
+    const leadCards = hand.filter(c=>c.suit===lead);
+    if(leadCards.length){
+      const highestLead = trick.filter(c=>c.suit===lead).reduce((m,c)=>Math.max(m,c.rank),-1);
+      const higher = leadCards.filter(c=>c.rank>highestLead);
+      if(higher.length){const minHigher=Math.min(...higher.map(c=>c.rank));return hand.map((c,i)=>c.suit===lead&&c.rank===minHigher?i:-1).filter(i=>i>=0);} 
+      return hand.map((c,i)=>c.suit===lead?i:-1).filter(i=>i>=0);
+    }
+    const trumps = hand.filter(c=>c.suit===trump);
+    if(trumps.length){
+      const highestTrump = trick.filter(c=>c.suit===trump).reduce((m,c)=>Math.max(m,c.rank),-1);
+      if(highestTrump>=0){
+        const higher = trumps.filter(c=>c.rank>highestTrump);
+        if(higher.length){const minHigher=Math.min(...higher.map(c=>c.rank));return hand.map((c,i)=>c.suit===trump&&c.rank===minHigher?i:-1).filter(i=>i>=0);}
+        return hand.map((c,i)=>c.suit===trump?i:-1).filter(i=>i>=0);
+      }
+      return hand.map((c,i)=>c.suit===trump?i:-1).filter(i=>i>=0);
+    }
+    return hand.map((_,i)=>i);
+  }
+  function determineTrickWinner(trick,lead,trump){
+    let winIdx=0;let win=trick[0];
+    for(let i=1;i<trick.length;i++){
+      const c=trick[i];
+      if(c.suit===win.suit&&c.rank>win.rank){win=c;winIdx=i;continue;}
+      if(c.suit===trump&&win.suit!==trump){win=c;winIdx=i;continue;}
+      if(c.suit===trump&&win.suit===trump&&c.rank>win.rank){win=c;winIdx=i;continue;}
+    }
+    return {index:winIdx,card:win};
+  }
+  return {createDeck,shuffle,cardString,getLegalMoves,determineTrickWinner,suits,suitSymbols};
+})();
+
+if(typeof document!=="undefined"){(function(){
+  const phaseEl=document.getElementById('phase');
+  const controlsEl=document.getElementById('controls');
+  const tableEl=document.getElementById('table');
+  const handEl=document.getElementById('hand');
+  const scoreEl=document.getElementById('scoreboard');
+
+  let players=[]; // each {name,hand:[],claim:0,tricks:0,ai:true,diff:'medium'}
+  let deck=[]; let trump='S'; let lead=0; let trick=[]; let current=0; let changedTrump=false; let trickNo=0;
+
+  function setup(){
+    players=[
+      {name:'You',hand:[],claim:0,tricks:0,ai:false,diff:'human'},
+      {name:'AI 1',hand:[],claim:0,tricks:0,ai:true,diff:'easy'},
+      {name:'AI 2',hand:[],claim:0,tricks:0,ai:true,diff:'medium'},
+      {name:'AI 3',hand:[],claim:0,tricks:0,ai:true,diff:'hard'},
+    ];
+    deck=Game.createDeck();
+    Game.shuffle(deck);
+    for(const p of players){p.hand=deck.splice(0,5);}
+    trump='S'; changedTrump=false; lead=0; trick=[]; current=0; trickNo=0;
+    phaseEl.textContent='Select Trump';
+    renderTrumpSelect();
+  }
+
+  function renderTrumpSelect(){
+    controlsEl.innerHTML='';
+    const sel=document.createElement('select');
+    for(const s of Game.suits){const opt=document.createElement('option');opt.value=s;opt.textContent=Game.suitSymbols[s];if(s==='S')opt.selected=true;sel.appendChild(opt);} 
+    controlsEl.appendChild(sel);
+    const btn=document.createElement('button');btn.textContent='Confirm Trump';btn.className='btn';btn.onclick=()=>{trump=sel.value;changedTrump=trump!=='S';dealRest();};controlsEl.appendChild(btn);
+    renderHand();
+  }
+
+  function dealRest(){
+    controlsEl.innerHTML='';
+    for(const p of players){p.hand.push(...deck.splice(0,4));}
+    for(const p of players){p.hand.push(...deck.splice(0,4));}
+    phaseEl.textContent='Enter Claim';
+    renderClaimPhase();
+  }
+
+  function renderHand(legal){
+    handEl.innerHTML='';
+    const hand=players[0].hand;
+    hand.forEach((c,i)=>{
+      const div=document.createElement('div');div.className='card'+(c.suit==='H'||c.suit==='D'?' red':'');
+      div.innerHTML='<div class="corner">'+symbolRank(c)+'</div><div class="suit">'+Game.suitSymbols[c.suit]+'</div><div class="corner">'+symbolRank(c)+'</div>';
+      if(legal&&legal.indexOf(i)===-1)div.classList.add('disabled');
+      else div.onclick=()=>playCard(0,i);
+      handEl.appendChild(div);
+    });
+  }
+
+  function symbolRank(c){const rm={11:'J',12:'Q',13:'K',14:'A'};return rm[c.rank]||c.rank;}
+
+  function renderClaimPhase(){
+    controlsEl.innerHTML='';
+    const inp=document.createElement('input');inp.type='number';inp.min=changedTrump?5:0;inp.value=changedTrump?5:0;controlsEl.appendChild(inp);
+    const btn=document.createElement('button');btn.textContent='Lock Claims';btn.className='btn';btn.onclick=()=>{players[0].claim=parseInt(inp.value,10)||0;aiClaims();startPlay();};controlsEl.appendChild(btn);
+    renderHand();
+  }
+
+  function aiClaims(){
+    for(let i=1;i<4;i++){
+      const p=players[i];
+      let trumpCount=p.hand.filter(c=>c.suit===trump&&c.rank>=10).length;
+      let high=p.hand.filter(c=>c.rank>=11).length;
+      p.claim=Math.max(1,Math.min(13,Math.floor((trumpCount*1.5+high)/3)+1));
+    }
+    updateScoreboard();
+  }
+
+  function updateScoreboard(){
+    scoreEl.innerHTML='';
+    const table=document.createElement('table');
+    const head=document.createElement('tr');['Player','Claim','Tricks','Score'].forEach(t=>{const th=document.createElement('th');th.textContent=t;head.appendChild(th);});
+    table.appendChild(head);
+    players.forEach(p=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML='<td>'+p.name+'</td><td>'+p.claim+'</td><td>'+p.tricks+'</td><td>'+(p.score||0)+'</td>';
+      table.appendChild(tr);
+    });
+    scoreEl.appendChild(table);
+  }
+
+  function startPlay(){
+    phaseEl.textContent='Play';
+    controlsEl.innerHTML='';
+    updateScoreboard();
+    renderHand();
+    renderTable();
+    current=lead;
+    nextTurn();
+  }
+
+  function renderTable(){
+    tableEl.innerHTML='';
+    const slots=['ai0','ai1','ai2','human'];
+    for(const s of slots){const div=document.createElement('div');div.className='slot '+s;tableEl.appendChild(div);} 
+  }
+
+  function playCard(playerIndex,cardIndex){
+    const p=players[playerIndex];
+    const card=p.hand.splice(cardIndex,1)[0];
+    trick.push({...card,player:playerIndex});
+    const slot=tableEl.children[playerIndex];
+    slot.innerHTML='<div class="card'+(card.suit==='H'||card.suit==='D'?' red':'')+'"><div class="corner">'+symbolRank(card)+'</div><div class="suit">'+Game.suitSymbols[card.suit]+'</div><div class="corner">'+symbolRank(card)+'</div></div>';
+    if(trick.length===4){
+      const win=Game.determineTrickWinner(trick, trick[0].suit, trump);
+      players[trick[win.index].player].tricks++;
+      updateScoreboard();
+      lead=trick[win.index].player;
+      trick=[];
+      trickNo++;
+      if(trickNo===13){endRound();return;}
+      setTimeout(()=>{renderTable();current=lead;nextTurn();},1000);
+    }else{
+      current=(playerIndex+1)%4;
+      nextTurn();
+    }
+    if(playerIndex===0)renderHand();
+  }
+
+  function nextTurn(){
+    if(players[current].ai){
+      setTimeout(()=>{
+        const legal=Game.getLegalMoves(players[current].hand,trick,trick[0]?.suit,trump);
+        let idx=0;const hand=players[current].hand;
+        if(players[current].diff==='easy'){idx=legal.sort((a,b)=>hand[a].rank-hand[b].rank)[0];}
+        else if(players[current].diff==='medium'){idx=chooseWinningCard(legal,hand);}
+        else{idx=chooseSmartCard(legal,hand);} 
+        playCard(current,idx);
+      },800);
+    }else{
+      const legal=Game.getLegalMoves(players[0].hand,trick,trick[0]?.suit,trump);
+      renderHand(legal);
+    }
+  }
+
+  function chooseWinningCard(legal,hand){
+    let best=null;let highest=trick[0];
+    const leadSuit=trick[0]?.suit;const winning=trick.length?Game.determineTrickWinner(trick,leadSuit,trump).card:null;
+    for(const i of legal){const c=hand[i];
+      let temp=[...trick,{...c,player:current}];
+      const win=Game.determineTrickWinner(temp, temp[0].suit, trump);
+      if(win.index===temp.length-1){if(!best||c.rank<best.rank)best=c;}
+    }
+    if(best){return hand.indexOf(best);}else{return legal.sort((a,b)=>hand[a].rank-hand[b].rank)[0];}
+  }
+
+  function chooseSmartCard(legal,hand){
+    // very naive strategic: try to win, otherwise shed high cards
+    const winIdx=chooseWinningCard(legal,hand);
+    if(winIdx!==undefined) return winIdx;
+    // drop highest card
+    return legal.sort((a,b)=>hand[b].rank-hand[a].rank)[0];
+  }
+
+  function endRound(){
+    phaseEl.textContent='Game Over';
+    controlsEl.innerHTML='';
+    for(const p of players){p.score=(p.tricks>=p.claim)?p.tricks:-p.claim;}
+    updateScoreboard();
+    const btn=document.createElement('button');btn.textContent='New Game';btn.className='btn';btn.onclick=setup;controlsEl.appendChild(btn);
+  }
+
+  setup();
+})();}
+</script>
+</body>
+</html>
