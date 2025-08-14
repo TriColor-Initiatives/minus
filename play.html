@@ -93,6 +93,10 @@ const Game = (()=>{
   return {createDeck,shuffle,cardString,getLegalMoves,determineTrickWinner,sortHand,suits,suitSymbols};
 })();
 
+const turnOrder=[1,2,3,0];
+Game.turnOrder=turnOrder;
+Game.nextPlayer=idx=>turnOrder[(turnOrder.indexOf(idx)+1)%4];
+
 if(typeof document!=="undefined"){(function(){
   const phaseEl=document.getElementById('phase');
   const controlsEl=document.getElementById('controls');
@@ -115,11 +119,11 @@ if(typeof document!=="undefined"){(function(){
     dealer=totals.indexOf(Math.min(...totals));
     for(const p of players){p.hand=deck.splice(0,5);}
     trump='S'; trick=[]; current=0; trickNo=0; highestBid=0; trumpCaller=null; biddingDone=false;
-    lead=(dealer+1)%4;
+    lead=Game.nextPlayer(dealer);
     renderHand();
     renderTable();
     updatePlayerInfo();
-    bidIndex=(dealer+1)%4; startBid=bidIndex;
+    bidIndex=Game.nextPlayer(dealer); startBid=bidIndex;
     askBid();
   }
 
@@ -154,7 +158,7 @@ if(typeof document!=="undefined"){(function(){
   }
 
   function advanceBid(){
-    bidIndex=(bidIndex+1)%4;
+    bidIndex=Game.nextPlayer(bidIndex);
     if(bidIndex===startBid){finalizeBidding();}
     else{askBid();}
   }
@@ -222,6 +226,7 @@ if(typeof document!=="undefined"){(function(){
     renderHand();
     renderTable();
     updatePlayerInfo();
+    lead=highestBid>=5?trumpCaller:Game.nextPlayer(dealer);
     current=lead;
     nextTurn();
   }
@@ -271,7 +276,7 @@ if(typeof document!=="undefined"){(function(){
       if(trickNo===13){endRound();return;}
       setTimeout(()=>{renderTable();updatePlayerInfo();current=lead;nextTurn();},1000);
     }else{
-      current=(playerIndex+1)%4;
+      current=Game.nextPlayer(playerIndex);
       nextTurn();
     }
     if(playerIndex===0)renderHand();

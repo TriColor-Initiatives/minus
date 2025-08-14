@@ -66,4 +66,10 @@ hand2=[{suit:'D',rank:3},{suit:'D',rank:10}];
 legal2=Game.getLegalMoves(hand2,[{suit:'D',rank:12,player:1}],'D','S',true);
 assert.deepStrictEqual(legal2.sort((a,b)=>a-b),[0,1]);
 
+// Turn order cycles A3 -> A1 -> A2 -> You -> A3
+assert.strictEqual(Game.nextPlayer(1),2);
+assert.strictEqual(Game.nextPlayer(2),3);
+assert.strictEqual(Game.nextPlayer(3),0);
+assert.strictEqual(Game.nextPlayer(0),1);
+
 console.log('All tests passed');
