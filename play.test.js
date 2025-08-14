@@ -16,6 +16,17 @@ const deck = Game.createDeck();
 assert.strictEqual(deck.length,52);
 assert.strictEqual(new Set(deck.map(c=>c.suit+c.rank)).size,52);
 
+// Sorting: spades, hearts, diamonds, clubs; high to low within suit
+let unsorted=[
+  {suit:'C',rank:2},
+  {suit:'S',rank:14},
+  {suit:'H',rank:10},
+  {suit:'S',rank:9},
+  {suit:'D',rank:13}
+];
+Game.sortHand(unsorted);
+assert.deepStrictEqual(unsorted.map(Game.cardString),['AS','9S','10H','KD','2C']);
+
 // Rule: follow lead suit if possible (any card of the suit allowed)
 let hand = [{suit:'D',rank:3},{suit:'D',rank:5},{suit:'S',rank:9}];
 let legal = Game.getLegalMoves(hand,[{suit:'D',rank:2,player:1}],'D','S');

@@ -69,7 +69,15 @@ const Game = (()=>{
     }
     return {index:winIdx,card:win};
   }
-  return {createDeck,shuffle,cardString,getLegalMoves,determineTrickWinner,suits,suitSymbols};
+  function sortHand(hand){
+    const order={S:0,H:1,D:2,C:3};
+    hand.sort((a,b)=>{
+      if(order[a.suit]!==order[b.suit]) return order[a.suit]-order[b.suit];
+      return b.rank-a.rank;
+    });
+    return hand;
+  }
+  return {createDeck,shuffle,cardString,getLegalMoves,determineTrickWinner,sortHand,suits,suitSymbols};
 })();
 
 if(typeof document!=="undefined"){(function(){
@@ -116,6 +124,7 @@ if(typeof document!=="undefined"){(function(){
 
   function renderHand(legal){
     handEl.innerHTML='';
+    Game.sortHand(players[0].hand);
     const hand=players[0].hand;
     hand.forEach((c,i)=>{
       const div=document.createElement('div');div.className='card'+(c.suit==='H'||c.suit==='D'?' red':'');
@@ -207,6 +216,7 @@ if(typeof document!=="undefined"){(function(){
         playCard(current,idx);
       },800);
     }else{
+      Game.sortHand(players[0].hand);
       const legal=Game.getLegalMoves(players[0].hand,trick,trick[0]?.suit,trump);
       renderHand(legal);
     }
