@@ -62,8 +62,9 @@ const Game = (()=>{
   function getLegalMoves(hand,trick,lead,trump,enforceHigh=false){
     if(!lead) return hand.map((_,i)=>i);
     const leadCards=hand.filter(c=>c.suit===lead);
+    const trumpPlayed=trick.some(c=>c.suit===trump);
     if(leadCards.length){
-      if(enforceHigh){
+      if(enforceHigh && !trumpPlayed){
         const highest=trick.filter(c=>c.suit===lead).reduce((a,c)=>c.rank>(a?.rank||0)?c:a,null);
         const higher=leadCards.filter(c=>c.rank>(highest?.rank||0));
         if(higher.length){return hand.map((c,i)=>higher.includes(c)?i:-1).filter(i=>i>=0);}
