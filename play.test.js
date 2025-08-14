@@ -27,34 +27,24 @@ let unsorted=[
 Game.sortHand(unsorted);
 assert.deepStrictEqual(unsorted.map(Game.cardString),['AS','9S','10H','2C','KD']);
 
-// Rule: must beat highest in lead suit when possible
+// Rule: must follow lead suit if available
 let hand = [{suit:'H',rank:2},{suit:'H',rank:8},{suit:'C',rank:4}];
-let legal = Game.getLegalMoves(hand,[{suit:'H',rank:6,player:1}],'H','S',true);
-assert.deepStrictEqual(legal.sort((a,b)=>a-b),[1]);
+let legal = Game.getLegalMoves(hand,[{suit:'H',rank:6,player:1}],'H','S');
+assert.deepStrictEqual(legal.sort((a,b)=>a-b),[0,1]);
 
-// Once a trump is played, lead suit may play any card
+// Once a trump is played, lead suit may still play any card of lead suit
 hand = [{suit:'H',rank:2},{suit:'H',rank:8},{suit:'C',rank:4}];
-legal = Game.getLegalMoves(hand,[{suit:'H',rank:6,player:1},{suit:'S',rank:5,player:2}],'H','S',true);
+legal = Game.getLegalMoves(hand,[{suit:'H',rank:6,player:1},{suit:'S',rank:5,player:2}],'H','S');
 assert.deepStrictEqual(legal.sort((a,b)=>a-b),[0,1]);
 
 // Rule: no lead suit, must play trump
 hand = [{suit:'S',rank:7},{suit:'S',rank:9},{suit:'C',rank:4}];
-legal = Game.getLegalMoves(hand,[{suit:'H',rank:11,player:1}],'H','S',true);
-assert.deepStrictEqual(legal.sort((a,b)=>a-b),[0,1]);
-
-// When trump already played, must beat highest trump if possible
-hand = [{suit:'S',rank:3},{suit:'S',rank:7},{suit:'C',rank:4}];
-legal = Game.getLegalMoves(hand,[{suit:'H',rank:11,player:1},{suit:'S',rank:5,player:2}],'H','S',true);
-assert.deepStrictEqual(legal.sort((a,b)=>a-b),[1]);
-
-// If no higher trump, any trump allowed
-hand = [{suit:'S',rank:3},{suit:'S',rank:5}];
-legal = Game.getLegalMoves(hand,[{suit:'H',rank:11,player:1},{suit:'S',rank:7,player:2}],'H','S',true);
+legal = Game.getLegalMoves(hand,[{suit:'H',rank:11,player:1}],'H','S');
 assert.deepStrictEqual(legal.sort((a,b)=>a-b),[0,1]);
 
 // Rule: no lead suit and no trump, play any card
 hand = [{suit:'H',rank:7},{suit:'C',rank:4},{suit:'H',rank:8}];
-legal = Game.getLegalMoves(hand,[{suit:'D',rank:11,player:1}],'D','S',true);
+legal = Game.getLegalMoves(hand,[{suit:'D',rank:11,player:1}],'D','S');
 assert.deepStrictEqual(legal.sort((a,b)=>a-b),[0,1,2]);
 
 // Trick winner with trump
@@ -72,14 +62,6 @@ const trick2=[{suit:'D',rank:13,player:0},{suit:'D',rank:14,player:1}];
 const win2=Game.determineTrickWinner(trick2,'D','S');
 assert.strictEqual(win2.index,1);
 
-// enforceHigh forces playing higher card when available
-let hand2=[{suit:'D',rank:3},{suit:'D',rank:10},{suit:'C',rank:5}];
-let legal2=Game.getLegalMoves(hand2,[{suit:'D',rank:7,player:1}],'D','S',true);
-assert.deepStrictEqual(legal2.sort((a,b)=>a-b),[1]);
-// if no higher card, all lead suit cards allowed
-hand2=[{suit:'D',rank:3},{suit:'D',rank:10}];
-legal2=Game.getLegalMoves(hand2,[{suit:'D',rank:12,player:1}],'D','S',true);
-assert.deepStrictEqual(legal2.sort((a,b)=>a-b),[0,1]);
 
 // Turn order cycles A3 -> A1 -> A2 -> You -> A3
 assert.strictEqual(Game.nextPlayer(1),2);

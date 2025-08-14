@@ -85,25 +85,14 @@ const Game = (()=>{
   function createDeck(){const d=[];for(const s of suits){for(const r of ranks){d.push({suit:s,rank:r});}}return d;}
   function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}}
   function cardString(c){const rm={11:'J',12:'Q',13:'K',14:'A'};return (rm[c.rank]||c.rank)+c.suit;}
-  function getLegalMoves(hand,trick,lead,trump,enforceHigh=false){
+  function getLegalMoves(hand,trick,lead,trump){
     if(!lead) return hand.map((_,i)=>i);
     const leadCards=hand.filter(c=>c.suit===lead);
-    const trumpPlayed=trick.some(c=>c.suit===trump);
     if(leadCards.length){
-      if(enforceHigh && !trumpPlayed){
-        const highest=trick.filter(c=>c.suit===lead).reduce((a,c)=>c.rank>(a?.rank||0)?c:a,null);
-        const higher=leadCards.filter(c=>c.rank>(highest?.rank||0));
-        if(higher.length){return hand.map((c,i)=>higher.includes(c)?i:-1).filter(i=>i>=0);}
-      }
       return hand.map((c,i)=>c.suit===lead?i:-1).filter(i=>i>=0);
     }
     const trumps=hand.filter(c=>c.suit===trump);
     if(trumps.length){
-      if(enforceHigh){
-        const highestT=trick.filter(c=>c.suit===trump).reduce((a,c)=>c.rank>(a?.rank||0)?c:a,null);
-        const higher=trumps.filter(c=>c.rank>(highestT?.rank||0));
-        if(higher.length){return hand.map((c,i)=>higher.includes(c)?i:-1).filter(i=>i>=0);}
-      }
       return hand.map((c,i)=>c.suit===trump?i:-1).filter(i=>i>=0);
     }
     return hand.map((_,i)=>i);
@@ -340,7 +329,7 @@ if(typeof document!=="undefined"){(function(){
   function nextTurn(){
     if(players[current].ai){
       setTimeout(()=>{
-        const legal=Game.getLegalMoves(players[current].hand,trick,trick[0]?.suit,trump,true);
+        const legal=Game.getLegalMoves(players[current].hand,trick,trick[0]?.suit,trump);
         let idx=0;const hand=players[current].hand;
         if(players[current].diff==='easy'){idx=legal.sort((a,b)=>hand[a].rank-hand[b].rank)[0];}
         else if(players[current].diff==='medium'){idx=chooseWinningCard(legal,hand);}
@@ -349,7 +338,7 @@ if(typeof document!=="undefined"){(function(){
       },800);
     }else{
       Game.sortHand(players[0].hand);
-      const legal=Game.getLegalMoves(players[0].hand,trick,trick[0]?.suit,trump,true);
+      const legal=Game.getLegalMoves(players[0].hand,trick,trick[0]?.suit,trump);
       renderHand(legal);
     }
   }
