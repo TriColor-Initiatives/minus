@@ -33,6 +33,8 @@ body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,
 #scoreboard{width:200px;margin-left:20px;}
 #scoreboard table{width:100%;border-collapse:collapse;}
 #scoreboard th,#scoreboard td{border:1px solid rgba(2,8,23,.1);padding:8px;text-align:center;}
+#scoreboard tfoot td{font-weight:700;background:rgba(2,8,23,.05);}
+#scoreboard .minus{color:#e11d48;}
 #startBtn{position:absolute;top:10px;right:10px;}
 @media(max-width:600px){
   #game{flex-direction:column;}
@@ -224,22 +226,31 @@ if(typeof document!=="undefined"){(function(){
     if(!players.length){scoreEl.innerHTML='';return;}
     scoreEl.innerHTML='';
     const table=document.createElement('table');
+    const thead=document.createElement('thead');
+    const headerRow=document.createElement('tr');
+    headerRow.appendChild(document.createElement('th'));
+    players.forEach(p=>{const th=document.createElement('th');th.textContent=p.name;headerRow.appendChild(th);});
+    thead.appendChild(headerRow);table.appendChild(thead);
     const rounds=Math.max(0,...history.map(h=>h.length));
-    const head=document.createElement('tr');
-    const thPlayer=document.createElement('th');thPlayer.textContent='Player';head.appendChild(thPlayer);
-    for(let i=0;i<rounds;i++){head.appendChild(document.createElement('th'));}
-    const thTotal=document.createElement('th');thTotal.textContent='Total';head.appendChild(thTotal);
-    table.appendChild(head);
-    players.forEach((p,idx)=>{
+    const tbody=document.createElement('tbody');
+    for(let r=0;r<rounds;r++){
       const tr=document.createElement('tr');
-      tr.appendChild(td(p.name));
-      history[idx].forEach(s=>tr.appendChild(td(s)));
-      for(let i=history[idx].length;i<rounds;i++) tr.appendChild(td(''));
-      tr.appendChild(td(p.total));
-      table.appendChild(tr);
-    });
+      tr.appendChild(document.createElement('td'));
+      for(let i=0;i<players.length;i++){
+        const score=history[i][r];
+        const cell=document.createElement('td');
+        if(score!==undefined){cell.textContent=score;if(score<0)cell.classList.add('minus');}
+        tr.appendChild(cell);
+      }
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    const tfoot=document.createElement('tfoot');
+    const totalRow=document.createElement('tr');
+    const label=document.createElement('td');label.textContent='Total';totalRow.appendChild(label);
+    players.forEach(p=>{const cell=document.createElement('td');cell.textContent=p.total;cell.classList.add('total');if(p.total<0)cell.classList.add('minus');totalRow.appendChild(cell);});
+    tfoot.appendChild(totalRow);table.appendChild(tfoot);
     scoreEl.appendChild(table);
-    function td(v){const c=document.createElement('td');c.textContent=v;return c;}
   }
 
   function startPlay(){
